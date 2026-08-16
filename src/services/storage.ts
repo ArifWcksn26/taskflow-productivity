@@ -156,7 +156,7 @@ export class StorageService {
   }
 
   /**
-   * Uploads current snapshot to Firestore Cloud and local cache
+   * Non-blocking upload to Firestore Cloud & local cache for instant UI feedback
    */
   public static async performCloudSync(
     tasks: Task[],
@@ -177,24 +177,28 @@ export class StorageService {
       version: '1.0.0',
     };
 
-    // Save to local cache
+    // 1. Save to local storage cache instantly
     try {
       localStorage.setItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`, JSON.stringify(snapshot));
     } catch {
       // ignore
     }
 
-    // Upload to Cloud Firestore database collection 'cloud_keys'
-    try {
-      const s = await getFirebaseServices();
-      if (s && s.db) {
-        const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
-        await s.dbMod.setDoc(keyRef, snapshot, { merge: true });
-      }
-    } catch (e) {
-      console.warn('Firestore performCloudSync:', e);
-    }
+    // 2. Non-blocking async upload to Cloud Firestore
+    getFirebaseServices()
+      .then(async (s) => {
+        if (s && s.db) {
+          try {
+            const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+            await s.dbMod.setDoc(keyRef, snapshot, { merge: true });
+          } catch (err) {
+            console.warn('Firestore performCloudSync bg:', err);
+          }
+        }
+      })
+      .catch(() => {});
 
+    // Instant response for smooth UI
     return {
       success: true,
       syncedAt: snapshot.syncedAt,
@@ -203,28 +207,40 @@ export class StorageService {
   }
 
   /**
-   * Restore cloud backup from a specific cloud key via Firestore Cloud
+   * Restore cloud backup with 3-second timeout protection against network hangs
    */
   public static async restoreFromCloud(
     cloudKey: string
   ): Promise<{ success: boolean; data?: { tasks: Task[]; categories: Category[]; members: TeamMember[]; logs: ActivityLog[]; habits?: Habit[] }; message: string }> {
     let parsed: any = null;
 
-    // 1. Fetch live snapshot from Firestore Cloud collection 'cloud_keys'
-    try {
-      const s = await getFirebaseServices();
-      if (s && s.db) {
-        const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
-        const snap = await s.dbMod.getDoc(keyRef);
-        if (snap.exists()) {
-          parsed = snap.data();
+    // Fetch from Cloud Firestore with 3s timeout
+    const fetchCloudPromise = async () => {
+      try {
+        const s = await getFirebaseServices();
+        if (s && s.db) {
+          const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+          const snap = await s.dbMod.getDoc(keyRef);
+          if (snap.exists()) {
+            return snap.data();
+          }
         }
+      } catch (e) {
+        console.warn('Firestore restoreFromCloud err:', e);
       }
-    } catch (e) {
-      console.warn('Firestore restoreFromCloud:', e);
+      return null;
+    };
+
+    try {
+      parsed = await Promise.race([
+        fetchCloudPromise(),
+        new Promise((r) => setTimeout(() => r(null), 3000)),
+      ]);
+    } catch {
+      parsed = null;
     }
 
-    // 2. Fallback to local storage if offline
+    // Fallback to local storage cache if offline or timeout
     if (!parsed) {
       try {
         const raw = localStorage.getItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`);
