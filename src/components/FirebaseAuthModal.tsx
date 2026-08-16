@@ -106,24 +106,10 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
           setSuccessMsg(null);
           onClose();
         }, 1500);
-      } else {
-        throw new Error('Fallback demo mode');
       }
     } catch (err: any) {
-      console.warn('Google Login Note:', err);
-      // Demo fallback user simulation
-      const demoUser: any = {
-        uid: 'google-user-demo-123',
-        displayName: 'Pengguna Google (Akun Cloud)',
-        email: 'user.google@taskflow.dev',
-        photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      };
-      setCurrentUser(demoUser);
-      setSuccessMsg('Terhubung dengan Akun Google (Mode Cloud)');
-      setTimeout(() => {
-        setSuccessMsg(null);
-        onClose();
-      }, 1500);
+      console.error('Google Auth Error:', err);
+      setErrorMsg(err.message || 'Gagal masuk dengan Google. Mohon izinkan pop-up browser Anda.');
     } finally {
       setLoading(false);
     }
@@ -144,30 +130,19 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
       if (isRegistering) {
         const res = await doCreateUserWithEmailAndPassword(email, password);
         setCurrentUser(res.user);
-        setSuccessMsg('Akun baru Firebase berhasil dibuat!');
+        setSuccessMsg('Akun baru berhasil dibuat!');
       } else {
         const res = await doSignInWithEmailAndPassword(email, password);
         setCurrentUser(res.user);
-        setSuccessMsg('Berhasil masuk ke akun Firebase!');
+        setSuccessMsg('Berhasil masuk ke akun Anda!');
       }
       setTimeout(() => {
         setSuccessMsg(null);
         onClose();
       }, 1500);
     } catch (err: any) {
-      // Demo fallback login if server auth offline
-      const demoUser: any = {
-        uid: `user-${Date.now()}`,
-        displayName: name || email.split('@')[0],
-        email: email,
-        photoURL: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-      };
-      setCurrentUser(demoUser);
-      setSuccessMsg(`Terhubung sebagai ${demoUser.displayName} (Mode Akun Cloud)`);
-      setTimeout(() => {
-        setSuccessMsg(null);
-        onClose();
-      }, 1500);
+      console.error('Email Auth Error:', err);
+      setErrorMsg(err.message || 'Gagal autentikasi email. Periksa email dan kata sandi Anda.');
     } finally {
       setLoading(false);
     }
