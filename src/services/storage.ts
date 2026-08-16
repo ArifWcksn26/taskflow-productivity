@@ -184,29 +184,10 @@ export class StorageService {
       // ignore
     }
 
-    // 2. Background upload to Cloud Firestore Web SDK
+    // 2. Direct Cloud Firestore Web SDK Upload
     saveCloudKeyDoc(cloudKey, snapshot).catch((err) => {
       console.warn('Firestore Cloud Sync Note:', err);
     });
-
-    // 3. Direct Native Google Firestore HTTPS REST API push (Zero 404 errors)
-    try {
-      fetch(
-        `https://firestore.googleapis.com/v1/projects/taskflow-6abe3/databases/(default)/documents/cloud_keys/${cloudKey}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fields: {
-              payload: { stringValue: JSON.stringify(snapshot) },
-              syncedAt: { stringValue: snapshot.syncedAt },
-            },
-          }),
-        }
-      ).catch(() => {});
-    } catch {
-      // ignore
-    }
 
     return {
       success: true,
@@ -216,7 +197,7 @@ export class StorageService {
   }
 
   /**
-   * Restore cloud backup from Cloud Firestore SDK & Native REST API
+   * Restore cloud backup from Cloud Firestore SDK
    */
   public static async restoreFromCloud(
     cloudKey: string
@@ -225,30 +206,9 @@ export class StorageService {
 
     // 1. Fetch live snapshot from Cloud Firestore Web SDK
     try {
-      parsed = await Promise.race([
-        fetchCloudKeyDoc(cloudKey),
-        new Promise((r) => setTimeout(() => r(null), 1500)),
-      ]);
+      parsed = await fetchCloudKeyDoc(cloudKey);
     } catch {
       parsed = null;
-    }
-
-    // 2. Fetch live snapshot from Native Google Firestore HTTPS REST API
-    if (!parsed) {
-      try {
-        const res = await fetch(
-          `https://firestore.googleapis.com/v1/projects/taskflow-6abe3/databases/(default)/documents/cloud_keys/${cloudKey}`
-        );
-        if (res.ok) {
-          const doc = await res.json();
-          const rawPayload = doc.fields?.payload?.stringValue;
-          if (rawPayload) {
-            parsed = JSON.parse(rawPayload);
-          }
-        }
-      } catch (e) {
-        console.warn('Firestore REST restore note:', e);
-      }
     }
 
     // 3. Fallback to local storage cache if offline
