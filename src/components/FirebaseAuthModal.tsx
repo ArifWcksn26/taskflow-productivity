@@ -79,6 +79,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
     let unsub: any = null;
     listenAuthState((user) => {
       setCurrentUser(user);
@@ -88,7 +89,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     return () => {
       if (unsub) unsub();
     };
-  }, [setCurrentUser]);
+  }, [isOpen, setCurrentUser]);
 
   if (!isOpen) return null;
 
