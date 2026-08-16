@@ -149,7 +149,21 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
-  // Automatically sync logged-in Google / Firebase Account to Team Members List (Penanggung Jawab Utama)
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const inviteParam = params.get('invite');
+      if (inviteParam) {
+        localStorage.setItem('taskflow_active_ws', inviteParam);
+        return inviteParam;
+      }
+      const saved = localStorage.getItem('taskflow_active_ws');
+      if (saved) return saved;
+    }
+    return 'pro-workspace-1';
+  });
+
+  // Automatically sync logged-in Google / Firebase Account to Team Members List & Workspace
   useEffect(() => {
     if (firebaseUser) {
       setMembers((prevMembers) => {
@@ -177,8 +191,45 @@ export default function App() {
 
         return [realGoogleMember, ...prevMembers];
       });
+
+      // Join Workspace in Cloud
+      FirebaseSyncService.joinWorkspaceWithGoogleAccount(activeWorkspaceId, firebaseUser);
     }
-  }, [firebaseUser]);
+  }, [firebaseUser, activeWorkspaceId]);
+
+  // Real-Time Shared Workspace Firestore Listener
+  useEffect(() => {
+    let unsubscribe: any = null;
+    FirebaseSyncService.subscribeWorkspaceData(activeWorkspaceId, (data) => {
+      if (data) {
+        if (data.tasks) setTasks(data.tasks);
+        if (data.categories) setCategories(data.categories);
+        if (data.members) setMembers(data.members);
+      }
+    }).then((unsubFn) => {
+      unsubscribe = unsubFn;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [activeWorkspaceId]);
+
+  // Save changes to Cloud Workspace
+  const syncWorkspaceChanges = useCallback(
+    (newTasks: Task[], newCategories: Category[], newMembers: TeamMember[]) => {
+      FirebaseSyncService.saveWorkspaceDataToCloud(activeWorkspaceId, {
+        tasks: newTasks,
+        categories: newCategories,
+        members: newMembers,
+      });
+    },
+    [activeWorkspaceId]
+  );
+
+  useEffect(() => {
+    syncWorkspaceChanges(tasks, categories, members);
+  }, [tasks, categories, members, syncWorkspaceChanges]);
 
   // Periodic Reminder & Deadline Checker (every 30 seconds)
   useEffect(() => {
@@ -944,6 +995,7 @@ export default function App() {
           tasks={tasks}
           onAddMember={handleAddMember}
           onRemoveMember={handleRemoveMember}
+          workspaceId={activeWorkspaceId}
         />
 
         {/* Cloud Sync Modal */}

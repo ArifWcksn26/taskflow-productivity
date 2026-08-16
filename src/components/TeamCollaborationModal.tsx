@@ -19,6 +19,7 @@ interface TeamCollaborationModalProps {
   tasks: Task[];
   onAddMember: (member: Omit<TeamMember, 'id'>) => void;
   onRemoveMember: (id: string) => void;
+  workspaceId?: string;
 }
 
 export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
@@ -28,6 +29,7 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   tasks,
   onAddMember,
   onRemoveMember,
+  workspaceId = 'pro-workspace-1',
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,6 +37,8 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
 
   if (!isOpen) return null;
+
+  const currentInviteLink = `${window.location.origin}/?invite=${encodeURIComponent(workspaceId)}`;
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +61,7 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   };
 
   const handleCopyInviteLink = () => {
-    const inviteLink = `${window.location.origin}/#invite-team-${Math.random().toString(36).substr(2, 6)}`;
-    navigator.clipboard.writeText(inviteLink);
+    navigator.clipboard.writeText(currentInviteLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
   };
@@ -89,7 +92,8 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Tutup Modal Kolaborasi Tim"
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -101,7 +105,7 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
                 <Share2 className="w-3 h-3" />
-                Tautan Undangan Proyek Bersama
+                Tautan Undangan Proyek Real-Time (Akun Google)
               </span>
               {copiedLink && (
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -113,15 +117,17 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
               <input
                 type="text"
                 readOnly
-                value={`${window.location.origin}/#workspace-invite-team`}
+                aria-label="Tautan Undangan Proyek Real-Time"
+                value={currentInviteLink}
                 className="flex-1 px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800/80 text-slate-600 dark:text-slate-300 select-all"
               />
               <button
                 onClick={handleCopyInviteLink}
+                aria-label="Salin Tautan Undangan Proyek"
                 className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
               >
                 <Copy className="w-3 h-3" />
-                <span>Salin</span>
+                <span>Salin Link</span>
               </button>
             </div>
           </div>
