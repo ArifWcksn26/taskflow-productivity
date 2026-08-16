@@ -204,9 +204,12 @@ export class StorageService {
   ): Promise<{ success: boolean; data?: { tasks: Task[]; categories: Category[]; members: TeamMember[]; logs: ActivityLog[]; habits?: Habit[] }; message: string }> {
     let parsed: any = null;
 
-    // 1. Fetch live snapshot from Cloud Firestore Web SDK
+    // 1. Fetch live snapshot from Cloud Firestore Web SDK (2-second timeout protection)
     try {
-      parsed = await fetchCloudKeyDoc(cloudKey);
+      parsed = await Promise.race([
+        fetchCloudKeyDoc(cloudKey),
+        new Promise((resolve) => setTimeout(() => resolve(null), 2000)),
+      ]);
     } catch {
       parsed = null;
     }

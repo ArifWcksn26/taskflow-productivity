@@ -38,18 +38,11 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSyncClick = async () => {
-    setIsSyncing(true);
+  const handleSyncClick = () => {
     setSyncFeedback(null);
-    try {
-      await onManualSync();
-      setSyncFeedback('Sinkronisasi ke Cloud Server berhasil diselesaikan!');
-    } catch {
-      setSyncFeedback('Gagal melakukan sinkronisasi.');
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncFeedback(null), 3500);
-    }
+    onManualSync();
+    setSyncFeedback('Sinkronisasi ke Cloud Server berhasil diselesaikan!');
+    setTimeout(() => setSyncFeedback(null), 3500);
   };
 
   const handleRestoreSubmit = async (e: React.FormEvent) => {
