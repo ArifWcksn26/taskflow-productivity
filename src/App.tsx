@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import {
   Task,
   Category,
@@ -17,23 +17,27 @@ import { NotificationService } from './services/notifications';
 import { AnalyticsService } from './services/analyticsService';
 import { playCompleteSound } from './services/sound';
 
-// Components
+// Core Eager Components
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { TaskList } from './components/TaskList';
 import { TaskModal } from './components/TaskModal';
 import { TaskDetailDrawer } from './components/TaskDetailDrawer';
-import { CalendarView } from './components/CalendarView';
 import { KanbanView } from './components/KanbanView';
-import { AnalyticsView } from './components/AnalyticsView';
-import { TeamCollaborationModal } from './components/TeamCollaborationModal';
-import { CloudSyncModal } from './components/CloudSyncModal';
-import { ExportModal } from './components/ExportModal';
-import { NotificationCenterModal } from './components/NotificationCenterModal';
-import { CategoryModal } from './components/CategoryModal';
-import { FirebaseAuthModal } from './components/FirebaseAuthModal';
+
+// Services
 import { FirebaseSyncService } from './services/firebaseSyncService';
 import type { User } from './services/firebase';
+
+// Lazy Loaded Secondary Components for Speed Optimization
+const CalendarView = lazy(() => import('./components/CalendarView').then((m) => ({ default: m.CalendarView })));
+const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) => ({ default: m.AnalyticsView })));
+const TeamCollaborationModal = lazy(() => import('./components/TeamCollaborationModal').then((m) => ({ default: m.TeamCollaborationModal })));
+const CloudSyncModal = lazy(() => import('./components/CloudSyncModal').then((m) => ({ default: m.CloudSyncModal })));
+const ExportModal = lazy(() => import('./components/ExportModal').then((m) => ({ default: m.ExportModal })));
+const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal').then((m) => ({ default: m.NotificationCenterModal })));
+const CategoryModal = lazy(() => import('./components/CategoryModal').then((m) => ({ default: m.CategoryModal })));
+const FirebaseAuthModal = lazy(() => import('./components/FirebaseAuthModal').then((m) => ({ default: m.FirebaseAuthModal })));
 
 export default function App() {
   // Theme & Sound
@@ -694,60 +698,65 @@ export default function App() {
 
         {/* Content Area */}
         <main className="flex-1 p-3 sm:p-4 lg:p-5 min-w-0 overflow-y-auto">
-          {activeTab === 'calendar' ? (
-            <CalendarView
-              tasks={tasks}
-              categories={categories}
-              members={members}
-              onOpenNewTaskModalWithDate={(dateStr) => {
-                setTaskToEdit({
-                  id: '',
-                  title: '',
-                  description: '',
-                  categoryId: categories[0]?.id || 'cat-work',
-                  priority: 'medium',
-                  dueDate: dateStr,
-                  dueTime: '18:00',
-                  reminderMinutesBefore: 30,
-                  isCompleted: false,
-                  subtasks: [],
-                  assignedMemberIds: ['user-1'],
-                  tags: [],
-                  comments: [],
-                  recurrence: 'none',
-                  createdAt: '',
-                  updatedAt: '',
-                });
-                setIsTaskModalOpen(true);
-              }}
-              onOpenDetails={(task) => setSelectedTaskForDetail(task)}
-              onToggleComplete={handleToggleComplete}
-            />
-          ) : activeTab === 'kanban' ? (
-            <KanbanView
-              tasks={tasks}
-              categories={categories}
-              members={members}
-              onToggleCompleteTask={handleToggleComplete}
-              onUpdateTaskStatus={handleUpdateTaskStatus}
-              onSelectTask={(task) => setSelectedTaskForDetail(task)}
-              onEditTask={(task) => {
-                setTaskToEdit(task);
-                setIsTaskModalOpen(true);
-              }}
-              onDeleteTask={handleDeleteTask}
-              onOpenNewTaskModal={() => {
-                setTaskToEdit(null);
-                setIsTaskModalOpen(true);
-              }}
-            />
-          ) : activeTab === 'analytics' ? (
-            <AnalyticsView
-              tasks={tasks}
-              categories={categories}
-              members={members}
-            />
-          ) : activeTab === 'team' ? (
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-12 text-slate-400 text-xs font-medium">
+              Memuat tampilan...
+            </div>
+          }>
+            {activeTab === 'calendar' ? (
+              <CalendarView
+                tasks={tasks}
+                categories={categories}
+                members={members}
+                onOpenNewTaskModalWithDate={(dateStr) => {
+                  setTaskToEdit({
+                    id: '',
+                    title: '',
+                    description: '',
+                    categoryId: categories[0]?.id || 'cat-work',
+                    priority: 'medium',
+                    dueDate: dateStr,
+                    dueTime: '18:00',
+                    reminderMinutesBefore: 30,
+                    isCompleted: false,
+                    subtasks: [],
+                    assignedMemberIds: ['user-1'],
+                    tags: [],
+                    comments: [],
+                    recurrence: 'none',
+                    createdAt: '',
+                    updatedAt: '',
+                  });
+                  setIsTaskModalOpen(true);
+                }}
+                onOpenDetails={(task) => setSelectedTaskForDetail(task)}
+                onToggleComplete={handleToggleComplete}
+              />
+            ) : activeTab === 'kanban' ? (
+              <KanbanView
+                tasks={tasks}
+                categories={categories}
+                members={members}
+                onToggleCompleteTask={handleToggleComplete}
+                onUpdateTaskStatus={handleUpdateTaskStatus}
+                onSelectTask={(task) => setSelectedTaskForDetail(task)}
+                onEditTask={(task) => {
+                  setTaskToEdit(task);
+                  setIsTaskModalOpen(true);
+                }}
+                onDeleteTask={handleDeleteTask}
+                onOpenNewTaskModal={() => {
+                  setTaskToEdit(null);
+                  setIsTaskModalOpen(true);
+                }}
+              />
+            ) : activeTab === 'analytics' ? (
+              <AnalyticsView
+                tasks={tasks}
+                categories={categories}
+                members={members}
+              />
+            ) : activeTab === 'team' ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -857,6 +866,7 @@ export default function App() {
               }}
             />
           )}
+          </Suspense>
         </main>
       </div>
 
@@ -894,84 +904,86 @@ export default function App() {
         onDelete={handleDeleteTask}
       />
 
-      {/* Team Collaboration Modal */}
-      <TeamCollaborationModal
-        isOpen={isTeamModalOpen}
-        onClose={() => setIsTeamModalOpen(false)}
-        members={members}
-        tasks={tasks}
-        onAddMember={handleAddMember}
-        onRemoveMember={handleRemoveMember}
-      />
+      <Suspense fallback={null}>
+        {/* Team Collaboration Modal */}
+        <TeamCollaborationModal
+          isOpen={isTeamModalOpen}
+          onClose={() => setIsTeamModalOpen(false)}
+          members={members}
+          tasks={tasks}
+          onAddMember={handleAddMember}
+          onRemoveMember={handleRemoveMember}
+        />
 
-      {/* Cloud Sync Modal */}
-      <CloudSyncModal
-        isOpen={isCloudSyncModalOpen}
-        onClose={() => setIsCloudSyncModalOpen(false)}
-        cloudSyncState={cloudSyncState}
-        onManualSync={handleManualSync}
-        onRestoreCloud={handleRestoreCloud}
-        onToggleAutoSync={(enabled) =>
-          setCloudSyncState((prev) => ({ ...prev, isAutoSync: enabled }))
-        }
-      />
-
-      {/* Export CSV / PDF / JSON Modal */}
-      <ExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        tasks={tasks}
-        categories={categories}
-        members={members}
-        onImportJSON={handleImportJSON}
-      />
-
-      {/* Notification Center Modal */}
-      <NotificationCenterModal
-        isOpen={isNotificationModalOpen}
-        onClose={() => setIsNotificationModalOpen(false)}
-        notifications={notifications}
-        onMarkAllAsRead={handleMarkAllNotifsRead}
-        onClearAll={handleClearAllNotifs}
-        onSelectTask={(taskId) => {
-          const t = tasks.find((item) => item.id === taskId);
-          if (t) setSelectedTaskForDetail(t);
-        }}
-      />
-
-      {/* Category Creation Modal */}
-      <CategoryModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        onAddCategory={handleAddCategory}
-      />
-
-      {/* Firebase Auth & Sync Modal */}
-      <FirebaseAuthModal
-        isOpen={isFirebaseAuthModalOpen}
-        onClose={() => setIsFirebaseAuthModalOpen(false)}
-        currentUser={firebaseUser}
-        setCurrentUser={setFirebaseUser}
-        onSyncToCloud={async () => {
-          if (firebaseUser) {
-            await FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, {
-              tasks,
-              categories,
-              habits,
-            });
+        {/* Cloud Sync Modal */}
+        <CloudSyncModal
+          isOpen={isCloudSyncModalOpen}
+          onClose={() => setIsCloudSyncModalOpen(false)}
+          cloudSyncState={cloudSyncState}
+          onManualSync={handleManualSync}
+          onRestoreCloud={handleRestoreCloud}
+          onToggleAutoSync={(enabled) =>
+            setCloudSyncState((prev) => ({ ...prev, isAutoSync: enabled }))
           }
-        }}
-        onSyncFromCloud={async () => {
-          if (firebaseUser) {
-            const data = await FirebaseSyncService.fetchUserDataFromCloud(firebaseUser.uid);
-            if (data) {
-              if (data.tasks) setTasks(data.tasks);
-              if (data.categories) setCategories(data.categories);
-              if (data.habits) setHabits(data.habits);
+        />
+
+        {/* Export CSV / PDF / JSON Modal */}
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          tasks={tasks}
+          categories={categories}
+          members={members}
+          onImportJSON={handleImportJSON}
+        />
+
+        {/* Notification Center Modal */}
+        <NotificationCenterModal
+          isOpen={isNotificationModalOpen}
+          onClose={() => setIsNotificationModalOpen(false)}
+          notifications={notifications}
+          onMarkAllAsRead={handleMarkAllNotifsRead}
+          onClearAll={handleClearAllNotifs}
+          onSelectTask={(taskId) => {
+            const t = tasks.find((item) => item.id === taskId);
+            if (t) setSelectedTaskForDetail(t);
+          }}
+        />
+
+        {/* Category Creation Modal */}
+        <CategoryModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onAddCategory={handleAddCategory}
+        />
+
+        {/* Firebase Auth & Sync Modal */}
+        <FirebaseAuthModal
+          isOpen={isFirebaseAuthModalOpen}
+          onClose={() => setIsFirebaseAuthModalOpen(false)}
+          currentUser={firebaseUser}
+          setCurrentUser={setFirebaseUser}
+          onSyncToCloud={async () => {
+            if (firebaseUser) {
+              await FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, {
+                tasks,
+                categories,
+                habits,
+              });
             }
-          }
-        }}
-      />
+          }}
+          onSyncFromCloud={async () => {
+            if (firebaseUser) {
+              const data = await FirebaseSyncService.fetchUserDataFromCloud(firebaseUser.uid);
+              if (data) {
+                if (data.tasks) setTasks(data.tasks);
+                if (data.categories) setCategories(data.categories);
+                if (data.habits) setHabits(data.habits);
+              }
+            }
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

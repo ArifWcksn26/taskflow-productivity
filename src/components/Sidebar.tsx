@@ -131,6 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 id={`nav-item-${item.id}`}
+                aria-label={item.label}
                 onClick={() => {
                   onSelectTab(item.tab);
                 }}
@@ -172,6 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </span>
           <button
             id="btn-add-category"
+            aria-label="Tambah Kategori Baru"
             onClick={onOpenNewCategoryModal}
             title="Tambah Kategori Baru"
             className="p-0.5 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -190,6 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={cat.id}
                 id={`cat-item-${cat.id}`}
+                aria-label={`Filter Kategori ${cat.name}`}
                 onClick={() => {
                   onSelectCategory(cat.id);
                   onSelectTab('category');
