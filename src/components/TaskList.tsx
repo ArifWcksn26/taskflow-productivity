@@ -229,7 +229,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {/* Filter Status */}
             <div>
-              <label htmlFor="select-filter-status" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-filter-status" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                 Status Tugas
               </label>
               <select
@@ -254,7 +254,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             {/* Filter Prioritas */}
             <div>
-              <label htmlFor="select-filter-priority" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-filter-priority" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                 Tingkat Prioritas
               </label>
               <select
@@ -277,11 +277,9 @@ export const TaskList: React.FC<TaskListProps> = ({
               </select>
             </div>
 
-
-
             {/* Urutan Sort */}
             <div>
-              <label htmlFor="select-sort-by" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-sort-by" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                 Urutkan Berdasarkan
               </label>
               <select

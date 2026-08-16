@@ -1,23 +1,5 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type User,
-} from 'firebase/auth';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot,
-} from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 
-// Default or Environment Configuration
 const env = (import.meta as any).env || {};
 const firebaseConfig = {
   apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyDemoTaskFlowApiKeyForLocalCloudTesting12345',
@@ -28,67 +10,101 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID || '1:123456789012:web:demo1234567890',
 };
 
-let app: any = null;
-let auth: any = null;
-let db: any = null;
-let googleProvider: any = null;
+let firebaseServicesPromise: Promise<{
+  app: any;
+  auth: any;
+  db: any;
+  googleProvider: any;
+  authMod: any;
+  dbMod: any;
+} | null> | null = null;
 
-// Defer non-critical Firebase Auth & Firestore SDK initialization until after initial page paint
-const initFirebase = () => {
-  if (app) return;
-  try {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    googleProvider = new GoogleAuthProvider();
-  } catch (err) {
-    console.warn('Firebase SDK Local Fallback Mode Enabled:', err);
+export async function getFirebaseServices() {
+  if (!firebaseServicesPromise) {
+    firebaseServicesPromise = (async () => {
+      try {
+        const [appMod, authMod, dbMod] = await Promise.all([
+          import('firebase/app'),
+          import('firebase/auth'),
+          import('firebase/firestore'),
+        ]);
+        const app = appMod.getApps().length > 0 ? appMod.getApp() : appMod.initializeApp(firebaseConfig);
+        const auth = authMod.getAuth(app);
+        const db = dbMod.getFirestore(app);
+        const googleProvider = new authMod.GoogleAuthProvider();
+        return { app, auth, db, googleProvider, authMod, dbMod };
+      } catch (err) {
+        console.warn('Firebase SDK Dynamic Load Fallback:', err);
+        return null;
+      }
+    })();
   }
+  return firebaseServicesPromise;
+}
+
+export const ensureFirebaseInit = async () => {
+  return await getFirebaseServices();
 };
 
-if (typeof window !== 'undefined') {
-  if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(initFirebase, { timeout: 3000 });
-  } else {
-    setTimeout(initFirebase, 1000);
+export async function doSignInWithPopup() {
+  const s = await getFirebaseServices();
+  if (s && s.auth && s.googleProvider) {
+    return s.authMod.signInWithPopup(s.auth, s.googleProvider);
+  }
+  throw new Error('Firebase Auth unavailable');
+}
+
+export async function doSignInWithEmailAndPassword(email: string, pass: string) {
+  const s = await getFirebaseServices();
+  if (s && s.auth) {
+    return s.authMod.signInWithEmailAndPassword(s.auth, email, pass);
+  }
+  throw new Error('Firebase Auth unavailable');
+}
+
+export async function doCreateUserWithEmailAndPassword(email: string, pass: string) {
+  const s = await getFirebaseServices();
+  if (s && s.auth) {
+    return s.authMod.createUserWithEmailAndPassword(s.auth, email, pass);
+  }
+  throw new Error('Firebase Auth unavailable');
+}
+
+export async function doSignOut() {
+  const s = await getFirebaseServices();
+  if (s && s.auth) {
+    return s.authMod.signOut(s.auth);
   }
 }
 
-export const ensureFirebaseInit = () => {
-  initFirebase();
-  return { app, auth, db, googleProvider };
-};
-
-// Safe wrapper for onAuthStateChanged to prevent app crashes if Firebase is unconfigured
-const safeOnAuthStateChanged = (authInstance: any, callback: (user: any) => void) => {
-  const currentAuth = authInstance || ensureFirebaseInit().auth;
-  if (!currentAuth) {
-    callback(null);
-    return () => {};
+export async function listenAuthState(callback: (user: any) => void) {
+  const s = await getFirebaseServices();
+  if (s && s.auth) {
+    return s.authMod.onAuthStateChanged(s.auth, callback);
   }
-  try {
-    return onAuthStateChanged(currentAuth, callback);
-  } catch (err) {
-    console.warn('Firebase Auth state listener error:', err);
-    callback(null);
-    return () => {};
-  }
-};
+  callback(null);
+  return () => {};
+}
 
-export {
-  app,
-  auth,
-  db,
-  googleProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  safeOnAuthStateChanged as onAuthStateChanged,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot,
-};
+// Firestore Wrappers
+export async function saveCloudUserDoc(uid: string, data: any) {
+  const s = await getFirebaseServices();
+  if (s && s.db) {
+    const userRef = s.dbMod.doc(s.db, 'users', uid);
+    await s.dbMod.setDoc(userRef, { ...data, lastSyncedAt: new Date().toISOString() }, { merge: true });
+    return true;
+  }
+  return false;
+}
+
+export async function fetchCloudUserDoc(uid: string) {
+  const s = await getFirebaseServices();
+  if (s && s.db) {
+    const userRef = s.dbMod.doc(s.db, 'users', uid);
+    const snap = await s.dbMod.getDoc(userRef);
+    return snap.exists() ? snap.data() : null;
+  }
+  return null;
+}
 
 export type { User };

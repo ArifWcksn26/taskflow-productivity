@@ -13,12 +13,11 @@ import {
   Check,
 } from 'lucide-react';
 import {
-  ensureFirebaseInit,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
+  listenAuthState,
+  doSignInWithPopup,
+  doSignInWithEmailAndPassword,
+  doCreateUserWithEmailAndPassword,
+  doSignOut,
   type User,
 } from '../services/firebase';
 
@@ -80,12 +79,15 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const { auth } = ensureFirebaseInit();
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsub: any = null;
+    listenAuthState((user) => {
       setCurrentUser(user);
+    }).then((unsubFn) => {
+      unsub = unsubFn;
     });
-    return () => unsubscribe();
+    return () => {
+      if (unsub) unsub();
+    };
   }, [setCurrentUser]);
 
   if (!isOpen) return null;
@@ -95,46 +97,16 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     setLoading(true);
     setErrorMsg(null);
     try {
-      const { auth, googleProvider } = ensureFirebaseInit();
-      const isRealApiKey =
-        (import.meta as any).env?.VITE_FIREBASE_API_KEY &&
-        !(import.meta as any).env?.VITE_FIREBASE_API_KEY.includes('AIzaSyDemo') &&
-        !(import.meta as any).env?.VITE_FIREBASE_API_KEY.includes('AIzaSy...');
-
-      if (auth && googleProvider && isRealApiKey) {
-        const res = await signInWithPopup(auth, googleProvider);
+      const res = await doSignInWithPopup();
+      if (res && res.user) {
         setCurrentUser(res.user);
         setSuccessMsg(`Selamat datang, ${res.user.displayName || 'Pengguna Google'}!`);
         setTimeout(() => {
           setSuccessMsg(null);
           onClose();
         }, 1500);
-      } else if (auth && googleProvider) {
-        // Attempt real auth even if key format unknown
-        try {
-          const res = await signInWithPopup(auth, googleProvider);
-          setCurrentUser(res.user);
-          setSuccessMsg(`Selamat datang, ${res.user.displayName || 'Pengguna Google'}!`);
-          setTimeout(() => {
-            setSuccessMsg(null);
-            onClose();
-          }, 1500);
-        } catch (realErr: any) {
-          console.error('Firebase Auth Error:', realErr);
-          if (realErr.code === 'auth/operation-not-allowed') {
-            setErrorMsg('Google Sign-in belum diaktifkan di Firebase Console > Authentication > Sign-in method.');
-          } else if (realErr.code === 'auth/unauthorized-domain') {
-            setErrorMsg('Domain localhost belum diizinkan di Firebase Console > Authentication > Settings > Authorized domains.');
-          } else if (realErr.code === 'auth/invalid-api-key') {
-            setErrorMsg('VITE_FIREBASE_API_KEY di file .env tidak valid. Mohon periksa kembali.');
-          } else if (realErr.message) {
-            setErrorMsg(`Firebase Error: ${realErr.message}`);
-          } else {
-            throw realErr;
-          }
-        }
       } else {
-        throw new Error('Demo Fallback Mode');
+        throw new Error('Fallback demo mode');
       }
     } catch (err: any) {
       console.warn('Google Login Note:', err);
@@ -168,13 +140,12 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     setErrorMsg(null);
 
     try {
-      const { auth } = ensureFirebaseInit();
       if (isRegistering) {
-        const res = await createUserWithEmailAndPassword(auth, email, password);
+        const res = await doCreateUserWithEmailAndPassword(email, password);
         setCurrentUser(res.user);
         setSuccessMsg('Akun baru Firebase berhasil dibuat!');
       } else {
-        const res = await signInWithEmailAndPassword(auth, email, password);
+        const res = await doSignInWithEmailAndPassword(email, password);
         setCurrentUser(res.user);
         setSuccessMsg('Berhasil masuk ke akun Firebase!');
       }
@@ -203,8 +174,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
 
   const handleSignOut = async () => {
     try {
-      const { auth } = ensureFirebaseInit();
-      if (auth) await signOut(auth);
+      await doSignOut();
     } catch {
       // ignore
     }
