@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
 import {
   Task,
   Category,
@@ -179,9 +179,14 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
-  // Fetch & Sync Cloud Data for logged in Google Account (Laptop ↔ HP Mobile)
+  // Ref to track if modal is open (prevent snapshot from interfering with modal typing)
+  const isEditingRef = useRef(false);
+  isEditingRef.current = isTaskModalOpen || isCategoryModalOpen || isFirebaseAuthModalOpen;
+
+  // Real-time Cloud Sync for logged in Google Account (Laptop ↔ HP Mobile Sync)
   useEffect(() => {
     if (!firebaseUser?.uid) return;
+    let unsubscribe: any = null;
 
     // Load initial data from cloud when logged in
     FirebaseSyncService.fetchUserDataFromCloud(firebaseUser.uid).then((cloudData) => {
@@ -197,14 +202,35 @@ export default function App() {
         }
       }
     });
+
+    // Subscribe to live changes from Firestore Cloud (HP ↔ Laptop)
+    FirebaseSyncService.subscribeUserData(firebaseUser.uid, (cloudData) => {
+      if (cloudData && !isEditingRef.current) {
+        if (cloudData.tasks && Array.isArray(cloudData.tasks)) {
+          setTasks(cloudData.tasks);
+        }
+        if (cloudData.categories && Array.isArray(cloudData.categories)) {
+          setCategories(cloudData.categories);
+        }
+        if (cloudData.habits && Array.isArray(cloudData.habits)) {
+          setHabits(cloudData.habits);
+        }
+      }
+    }).then((unsubFn) => {
+      unsubscribe = unsubFn;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [firebaseUser?.uid]);
 
-  // Debounced auto-save to Cloud Firestore when tasks, categories, or habits change
+  // Fast auto-push local changes to Cloud Firestore when logged in
   useEffect(() => {
     if (!firebaseUser?.uid) return;
     const timer = setTimeout(() => {
       FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, { tasks, categories, habits });
-    }, 2000);
+    }, 400);
     return () => clearTimeout(timer);
   }, [tasks, categories, habits, firebaseUser?.uid]);
 
