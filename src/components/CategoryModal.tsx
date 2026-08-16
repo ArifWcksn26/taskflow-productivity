@@ -65,7 +65,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Tutup Modal Kategori"
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -74,10 +75,12 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         <form onSubmit={handleSubmit} className="p-4 space-y-3.5">
           {/* Name */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label htmlFor="modal-input-category-name" className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Nama Kategori
             </label>
             <input
+              id="modal-input-category-name"
+              aria-label="Nama Kategori"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -99,6 +102,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   <button
                     key={c.hex}
                     type="button"
+                    aria-label={`Pilih warna ${c.hex}`}
                     onClick={() => setSelectedColor(c)}
                     className={`w-6 h-6 rounded-full transition-transform ${
                       isSelected ? 'ring-2 ring-indigo-500 ring-offset-2 scale-110' : 'hover:scale-105'

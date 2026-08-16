@@ -167,7 +167,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Tutup Modal Tugas"
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -177,11 +178,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         <form onSubmit={handleSubmit} className="p-4 space-y-3.5 max-h-[82vh] overflow-y-auto">
           {/* Title */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label htmlFor="modal-input-task-title" className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Judul Tugas <span className="text-rose-500">*</span>
             </label>
             <input
               id="modal-input-task-title"
+              aria-label="Judul Tugas"
               type="text"
               value={title}
               onChange={(e) => {
@@ -205,10 +207,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label htmlFor="modal-input-task-desc" className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Deskripsi & Catatan Tambahan
             </label>
             <textarea
+              id="modal-input-task-desc"
+              aria-label="Deskripsi & Catatan Tambahan"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -221,11 +225,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Category */}
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="modal-select-category" className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kategori / Folder
               </label>
               <select
                 id="modal-select-category"
+                aria-label="Pilih Kategori atau Folder"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs focus:outline-none"
@@ -335,10 +340,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {/* Date Input */}
               <div>
-                <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+                <label htmlFor="modal-input-due-date" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                   Tanggal Tenggat
                 </label>
                 <input
+                  id="modal-input-due-date"
+                  aria-label="Tanggal Tenggat"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -348,10 +355,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
               {/* Time Input */}
               <div>
-                <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+                <label htmlFor="modal-input-due-time" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                   Waktu / Jam
                 </label>
                 <input
+                  id="modal-input-due-time"
+                  aria-label="Waktu atau Jam Tenggat"
                   type="time"
                   value={dueTime}
                   onChange={(e) => setDueTime(e.target.value)}
@@ -361,10 +370,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
               {/* Reminder Threshold */}
               <div>
-                <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+                <label htmlFor="modal-select-reminder" className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                   Pengingat Suara & Push
                 </label>
                 <select
+                  id="modal-select-reminder"
+                  aria-label="Pengingat Suara dan Push Notification"
                   value={reminderMinutesBefore}
                   onChange={(e) => setReminderMinutesBefore(Number(e.target.value))}
                   className="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs"
