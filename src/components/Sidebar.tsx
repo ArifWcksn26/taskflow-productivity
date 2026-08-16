@@ -108,6 +108,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       tab: 'analytics' as ActiveTab,
     },
     {
+      id: 'team',
+      label: 'Kolaborasi Tim',
+      icon: Users,
+      tab: 'team' as ActiveTab,
+    },
+    {
       id: 'completed',
       label: 'Telah Selesai',
       icon: CheckCircle2,
