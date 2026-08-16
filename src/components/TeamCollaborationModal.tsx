@@ -153,13 +153,21 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
                         className="w-7 h-7 rounded-full object-cover ring-1 ring-white dark:ring-slate-800"
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-slate-900 dark:text-slate-100 truncate text-xs">
                             {m.name}
                           </span>
-                          {m.isCurrentUser && (
-                            <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
-                              Anda
+                          {m.isCurrentUser ? (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+                              Anda (Google)
+                            </span>
+                          ) : m.id.startsWith('google-') ? (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
+                              Google Auth Verified
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                              Menunggu Login Google
                             </span>
                           )}
                         </div>
@@ -175,9 +183,24 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
                         <div className="text-[9px] text-slate-400 uppercase">{m.role}</div>
                       </div>
 
+                      {!m.isCurrentUser && !m.id.startsWith('google-') && (
+                        <button
+                          onClick={() => {
+                            const link = `${window.location.origin}/?invite=${encodeURIComponent(workspaceId)}&email=${encodeURIComponent(m.email)}`;
+                            navigator.clipboard.writeText(link);
+                            alert(`Tautan khusus untuk ${m.email} berhasil disalin! Bagikan ke ${m.name} agar akun Google miliknya langsung terhubung.`);
+                          }}
+                          className="px-2 py-1 text-[10px] font-semibold rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300 hover:bg-indigo-100 transition-colors"
+                          title="Salin Link Undangan Khusus Email Ini"
+                        >
+                          Salin Link Email
+                        </button>
+                      )}
+
                       {!m.isCurrentUser && (
                         <button
                           onClick={() => onRemoveMember(m.id)}
+                          aria-label={`Hapus ${m.name}`}
                           className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                           title="Hapus Anggota"
                         >
