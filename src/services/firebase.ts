@@ -33,23 +33,41 @@ let auth: any = null;
 let db: any = null;
 let googleProvider: any = null;
 
-try {
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  googleProvider = new GoogleAuthProvider();
-} catch (err) {
-  console.warn('Firebase SDK Local Fallback Mode Enabled:', err);
+// Defer non-critical Firebase Auth & Firestore SDK initialization until after initial page paint
+const initFirebase = () => {
+  if (app) return;
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    googleProvider = new GoogleAuthProvider();
+  } catch (err) {
+    console.warn('Firebase SDK Local Fallback Mode Enabled:', err);
+  }
+};
+
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(initFirebase, { timeout: 3000 });
+  } else {
+    setTimeout(initFirebase, 1000);
+  }
 }
+
+export const ensureFirebaseInit = () => {
+  initFirebase();
+  return { app, auth, db, googleProvider };
+};
 
 // Safe wrapper for onAuthStateChanged to prevent app crashes if Firebase is unconfigured
 const safeOnAuthStateChanged = (authInstance: any, callback: (user: any) => void) => {
-  if (!authInstance) {
+  const currentAuth = authInstance || ensureFirebaseInit().auth;
+  if (!currentAuth) {
     callback(null);
     return () => {};
   }
   try {
-    return onAuthStateChanged(authInstance, callback);
+    return onAuthStateChanged(currentAuth, callback);
   } catch (err) {
     console.warn('Firebase Auth state listener error:', err);
     callback(null);

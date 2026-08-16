@@ -13,8 +13,7 @@ import {
   Check,
 } from 'lucide-react';
 import {
-  auth,
-  googleProvider,
+  ensureFirebaseInit,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -81,6 +80,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    const { auth } = ensureFirebaseInit();
     if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -95,6 +95,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     setLoading(true);
     setErrorMsg(null);
     try {
+      const { auth, googleProvider } = ensureFirebaseInit();
       const isRealApiKey =
         (import.meta as any).env?.VITE_FIREBASE_API_KEY &&
         !(import.meta as any).env?.VITE_FIREBASE_API_KEY.includes('AIzaSyDemo') &&
@@ -167,6 +168,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     setErrorMsg(null);
 
     try {
+      const { auth } = ensureFirebaseInit();
       if (isRegistering) {
         const res = await createUserWithEmailAndPassword(auth, email, password);
         setCurrentUser(res.user);
@@ -201,7 +203,8 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      const { auth } = ensureFirebaseInit();
+      if (auth) await signOut(auth);
     } catch {
       // ignore
     }

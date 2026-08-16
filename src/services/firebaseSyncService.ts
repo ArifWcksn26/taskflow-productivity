@@ -1,7 +1,8 @@
-import { db, doc, getDoc, setDoc, onSnapshot } from './firebase';
+import { ensureFirebaseInit, doc, getDoc, setDoc, onSnapshot } from './firebase';
 
 export class FirebaseSyncService {
   public static async saveUserDataToCloud(uid: string, data: { tasks: any[]; categories: any[]; habits: any[] }) {
+    const { db } = ensureFirebaseInit();
     if (!db) {
       // Local fallback simulation
       try {
@@ -29,6 +30,7 @@ export class FirebaseSyncService {
   }
 
   public static async fetchUserDataFromCloud(uid: string) {
+    const { db } = ensureFirebaseInit();
     if (!db) {
       try {
         const localData = localStorage.getItem(`taskflow_cloud_data_${uid}`);
@@ -51,6 +53,7 @@ export class FirebaseSyncService {
   }
 
   public static subscribeUserData(uid: string, callback: (data: any) => void) {
+    const { db } = ensureFirebaseInit();
     if (!db) return () => {};
     try {
       const userRef = doc(db, 'users', uid);
