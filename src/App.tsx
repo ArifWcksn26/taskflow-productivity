@@ -149,6 +149,37 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
+  // Automatically sync logged-in Google / Firebase Account to Team Members List (Penanggung Jawab Utama)
+  useEffect(() => {
+    if (firebaseUser) {
+      setMembers((prevMembers) => {
+        const primaryUserIndex = prevMembers.findIndex(
+          (m) => m.isCurrentUser || m.id === 'user-1' || m.email === firebaseUser.email
+        );
+
+        const realGoogleMember: TeamMember = {
+          id: primaryUserIndex >= 0 ? prevMembers[primaryUserIndex].id : `google-${firebaseUser.uid}`,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Pengguna Google (Anda)',
+          email: firebaseUser.email || 'google.account@taskflow.pro',
+          avatar:
+            firebaseUser.photoURL ||
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+          role: 'admin',
+          color: '#6366f1',
+          isCurrentUser: true,
+        };
+
+        if (primaryUserIndex >= 0) {
+          const updated = [...prevMembers];
+          updated[primaryUserIndex] = realGoogleMember;
+          return updated;
+        }
+
+        return [realGoogleMember, ...prevMembers];
+      });
+    }
+  }, [firebaseUser]);
+
   // Periodic Reminder & Deadline Checker (every 30 seconds)
   useEffect(() => {
     const checkTimer = setInterval(() => {
