@@ -121,7 +121,38 @@ export default function App() {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isFirebaseAuthModalOpen, setIsFirebaseAuthModalOpen] = useState(false);
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('taskflow_user_profile');
+        if (saved) return JSON.parse(saved);
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  });
+
+  // Save firebaseUser profile to localStorage for instant load on refresh
+  useEffect(() => {
+    if (firebaseUser) {
+      try {
+        localStorage.setItem(
+          'taskflow_user_profile',
+          JSON.stringify({
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          })
+        );
+      } catch {
+        // ignore
+      }
+    } else {
+      localStorage.removeItem('taskflow_user_profile');
+    }
+  }, [firebaseUser]);
 
   // Auto save to storage on change
   useEffect(() => {
