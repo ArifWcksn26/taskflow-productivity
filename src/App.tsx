@@ -32,7 +32,6 @@ import type { User } from './services/firebase';
 // Lazy Loaded Secondary Components for Speed Optimization
 const CalendarView = lazy(() => import('./components/CalendarView').then((m) => ({ default: m.CalendarView })));
 const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) => ({ default: m.AnalyticsView })));
-const TeamCollaborationModal = lazy(() => import('./components/TeamCollaborationModal').then((m) => ({ default: m.TeamCollaborationModal })));
 const CloudSyncModal = lazy(() => import('./components/CloudSyncModal').then((m) => ({ default: m.CloudSyncModal })));
 const ExportModal = lazy(() => import('./components/ExportModal').then((m) => ({ default: m.ExportModal })));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal').then((m) => ({ default: m.NotificationCenterModal })));
@@ -149,21 +148,7 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const inviteParam = params.get('invite');
-      if (inviteParam) {
-        localStorage.setItem('taskflow_active_ws', inviteParam);
-        return inviteParam;
-      }
-      const saved = localStorage.getItem('taskflow_active_ws');
-      if (saved) return saved;
-    }
-    return 'pro-workspace-1';
-  });
-
-  // Automatically sync logged-in Google / Firebase Account to Team Members List & Workspace
+  // Automatically sync logged-in Google / Firebase Account to Team Members List (Penanggung Jawab Utama)
   useEffect(() => {
     if (firebaseUser) {
       setMembers((prevMembers) => {
@@ -191,45 +176,8 @@ export default function App() {
 
         return [realGoogleMember, ...prevMembers];
       });
-
-      // Join Workspace in Cloud
-      FirebaseSyncService.joinWorkspaceWithGoogleAccount(activeWorkspaceId, firebaseUser);
     }
-  }, [firebaseUser, activeWorkspaceId]);
-
-  // Real-Time Shared Workspace Firestore Listener
-  useEffect(() => {
-    let unsubscribe: any = null;
-    FirebaseSyncService.subscribeWorkspaceData(activeWorkspaceId, (data) => {
-      if (data) {
-        if (data.tasks) setTasks(data.tasks);
-        if (data.categories) setCategories(data.categories);
-        if (data.members) setMembers(data.members);
-      }
-    }).then((unsubFn) => {
-      unsubscribe = unsubFn;
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [activeWorkspaceId]);
-
-  // Save changes to Cloud Workspace
-  const syncWorkspaceChanges = useCallback(
-    (newTasks: Task[], newCategories: Category[], newMembers: TeamMember[]) => {
-      FirebaseSyncService.saveWorkspaceDataToCloud(activeWorkspaceId, {
-        tasks: newTasks,
-        categories: newCategories,
-        members: newMembers,
-      });
-    },
-    [activeWorkspaceId]
-  );
-
-  useEffect(() => {
-    syncWorkspaceChanges(tasks, categories, members);
-  }, [tasks, categories, members, syncWorkspaceChanges]);
+  }, [firebaseUser]);
 
   // Periodic Reminder & Deadline Checker (every 30 seconds)
   useEffect(() => {
@@ -838,69 +786,13 @@ export default function App() {
                 categories={categories}
                 members={members}
               />
-            ) : activeTab === 'team' ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Pusat Kolaborasi Tim & Pembagian Tugas
-                  </h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Lihat anggota dan kelola pembagian penugasan dalam satu tempat.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsTeamModalOpen(true)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-all"
-                >
-                  + Kelola Akses & Undang
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {members.map((m) => {
-                  const assigned = tasks.filter((t) => t.assignedMemberIds.includes(m.id));
-                  const done = assigned.filter((t) => t.isCompleted).length;
-                  return (
-                    <div
-                      key={m.id}
-                      className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-2"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={m.avatar}
-                          alt={m.name}
-                          className="w-9 h-9 rounded-full object-cover ring-1.5 ring-indigo-500/20"
-                        />
-                        <div className="min-w-0">
-                          <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {m.name}
-                          </h3>
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            {m.role}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                        <div className="flex justify-between font-medium">
-                          <span>Beban Tugas:</span>
-                          <strong className="text-slate-800 dark:text-slate-200">
-                            {done}/{assigned.length} Selesai
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Task list for team */}
+            ) : (
               <TaskList
                 tasks={filteredTasks}
                 categories={categories}
                 members={members}
-                title="Daftar Tugas Tim"
-                subtitle="Semua tugas dengan anggota penanggung jawab aktif"
+                title={getTabTitle()}
+                subtitle={getTabSubtitle()}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 filters={filters}
@@ -920,34 +812,7 @@ export default function App() {
                   setIsTaskModalOpen(true);
                 }}
               />
-            </div>
-          ) : (
-            <TaskList
-              tasks={filteredTasks}
-              categories={categories}
-              members={members}
-              title={getTabTitle()}
-              subtitle={getTabSubtitle()}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              filters={filters}
-              onFiltersChange={setFilters}
-              onToggleComplete={handleToggleComplete}
-              onToggleSubtask={handleToggleSubtask}
-              onEdit={(task) => {
-                setTaskToEdit(task);
-                setIsTaskModalOpen(true);
-              }}
-              onDelete={handleDeleteTask}
-              onDuplicate={handleDuplicateTask}
-              onOpenDetails={(task) => setSelectedTaskForDetail(task)}
-              onQuickAddTask={handleQuickAddTask}
-              onOpenNewTaskModal={() => {
-                setTaskToEdit(null);
-                setIsTaskModalOpen(true);
-              }}
-            />
-          )}
+            )}
           </Suspense>
         </main>
       </div>
@@ -995,7 +860,6 @@ export default function App() {
           tasks={tasks}
           onAddMember={handleAddMember}
           onRemoveMember={handleRemoveMember}
-          workspaceId={activeWorkspaceId}
         />
 
         {/* Cloud Sync Modal */}

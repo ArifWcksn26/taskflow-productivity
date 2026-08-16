@@ -19,7 +19,6 @@ interface TeamCollaborationModalProps {
   tasks: Task[];
   onAddMember: (member: Omit<TeamMember, 'id'>) => void;
   onRemoveMember: (id: string) => void;
-  workspaceId?: string;
 }
 
 export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
@@ -29,7 +28,6 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   tasks,
   onAddMember,
   onRemoveMember,
-  workspaceId = 'pro-workspace-1',
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,8 +35,6 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
 
   if (!isOpen) return null;
-
-  const currentInviteLink = `${window.location.origin}/?invite=${encodeURIComponent(workspaceId)}`;
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +57,8 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
   };
 
   const handleCopyInviteLink = () => {
-    navigator.clipboard.writeText(currentInviteLink);
+    const inviteLink = `${window.location.origin}/#invite-team-${Math.random().toString(36).substr(2, 6)}`;
+    navigator.clipboard.writeText(inviteLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
   };
@@ -92,8 +89,7 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            aria-label="Tutup Modal Kolaborasi Tim"
-            className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -105,7 +101,7 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
                 <Share2 className="w-3 h-3" />
-                Tautan Undangan Proyek Real-Time (Akun Google)
+                Tautan Undangan Proyek Bersama
               </span>
               {copiedLink && (
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -117,17 +113,15 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
               <input
                 type="text"
                 readOnly
-                aria-label="Tautan Undangan Proyek Real-Time"
-                value={currentInviteLink}
+                value={`${window.location.origin}/#workspace-invite-team`}
                 className="flex-1 px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800/80 text-slate-600 dark:text-slate-300 select-all"
               />
               <button
                 onClick={handleCopyInviteLink}
-                aria-label="Salin Tautan Undangan Proyek"
                 className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
               >
                 <Copy className="w-3 h-3" />
-                <span>Salin Link</span>
+                <span>Salin</span>
               </button>
             </div>
           </div>
@@ -153,21 +147,13 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
                         className="w-7 h-7 rounded-full object-cover ring-1 ring-white dark:ring-slate-800"
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-bold text-slate-900 dark:text-slate-100 truncate text-xs">
                             {m.name}
                           </span>
-                          {m.isCurrentUser ? (
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
-                              Anda (Google)
-                            </span>
-                          ) : m.id.startsWith('google-') ? (
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
-                              Google Auth Verified
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
-                              Menunggu Login Google
+                          {m.isCurrentUser && (
+                            <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+                              Anda
                             </span>
                           )}
                         </div>
@@ -183,24 +169,9 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
                         <div className="text-[9px] text-slate-400 uppercase">{m.role}</div>
                       </div>
 
-                      {!m.isCurrentUser && !m.id.startsWith('google-') && (
-                        <button
-                          onClick={() => {
-                            const link = `${window.location.origin}/?invite=${encodeURIComponent(workspaceId)}&email=${encodeURIComponent(m.email)}`;
-                            navigator.clipboard.writeText(link);
-                            alert(`Tautan khusus untuk ${m.email} berhasil disalin! Bagikan ke ${m.name} agar akun Google miliknya langsung terhubung.`);
-                          }}
-                          className="px-2 py-1 text-[10px] font-semibold rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300 hover:bg-indigo-100 transition-colors"
-                          title="Salin Link Undangan Khusus Email Ini"
-                        >
-                          Salin Link Email
-                        </button>
-                      )}
-
                       {!m.isCurrentUser && (
                         <button
                           onClick={() => onRemoveMember(m.id)}
-                          aria-label={`Hapus ${m.name}`}
                           className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                           title="Hapus Anggota"
                         >
@@ -264,5 +235,28 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
         </div>
       </div>
     </div>
+  );
+};
+value = { role }
+onChange = {(e) => setRole(e.target.value as 'admin' | 'editor' | 'viewer')}
+className = "px-2 py-1 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+  >
+                <option value="editor">Editor (Bisa edit tugas)</option>
+                <option value="admin">Admin (Akses penuh)</option>
+                <option value="viewer">Viewer (Hanya lihat)</option>
+              </select >
+
+  <button
+    type="submit"
+    disabled={!name.trim() || !email.trim()}
+    className="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
+  >
+    + Tambahkan Anggota
+  </button>
+            </div >
+          </form >
+        </div >
+      </div >
+    </div >
   );
 };
