@@ -682,6 +682,9 @@ export default function App() {
   };
 
   const handleClearAllNotifs = () => {
+    const ids = notifications.map((n) => n.id);
+    const taskIds = notifications.map((n) => n.taskId).filter(Boolean) as string[];
+    NotificationService.dismissAll([...ids, ...taskIds]);
     setNotifications([]);
   };
 

@@ -32,6 +32,14 @@ export async function getFirebaseServices() {
         const auth = authMod.getAuth(app);
         const db = dbMod.getFirestore(app);
         const googleProvider = new authMod.GoogleAuthProvider();
+
+        // Non-blocking async anonymous sign in in background
+        if (!auth.currentUser) {
+          authMod.signInAnonymously(auth).catch((e: any) => {
+            console.warn('Anonymous Auth Note:', e);
+          });
+        }
+
         return { app, auth, db, googleProvider, authMod, dbMod };
       } catch (err) {
         console.warn('Firebase SDK Dynamic Load Fallback:', err);

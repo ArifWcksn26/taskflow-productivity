@@ -184,15 +184,10 @@ export class StorageService {
       // ignore
     }
 
-    // 2. Direct upload to Cloud Firestore with 1.2s timeout guard so UI is ultra fast
-    try {
-      await Promise.race([
-        saveCloudKeyDoc(cloudKey, snapshot),
-        new Promise((resolve) => setTimeout(resolve, 1200)),
-      ]);
-    } catch {
-      // background process continues seamlessly
-    }
+    // 2. Async background upload to Cloud Firestore (Instant UI response)
+    saveCloudKeyDoc(cloudKey, snapshot).catch((err) => {
+      console.warn('Background Cloud Sync Note:', err);
+    });
 
     return {
       success: true,

@@ -1,6 +1,8 @@
 import { Task, NotificationItem } from '../types';
 import { playReminderSound } from './sound';
 
+const DISMISSED_NOTIFS_KEY = 'taskflow_dismissed_notifs_v1';
+
 export class NotificationService {
   private static isNotificationSupported(): boolean {
     return typeof window !== 'undefined' && 'Notification' in window;
@@ -42,6 +44,25 @@ export class NotificationService {
     }
   }
 
+  public static getDismissedNotificationIds(): string[] {
+    try {
+      const data = localStorage.getItem(DISMISSED_NOTIFS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  public static dismissAll(ids: string[]): void {
+    try {
+      const current = this.getDismissedNotificationIds();
+      const merged = Array.from(new Set([...current, ...ids]));
+      localStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify(merged));
+    } catch {
+      // ignore
+    }
+  }
+
   /**
    * Scan tasks and identify any upcoming or overdue deadlines
    */
@@ -53,6 +74,7 @@ export class NotificationService {
     const newNotifications: NotificationItem[] = [];
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
+    const dismissedIds = this.getDismissedNotificationIds();
 
     tasks.forEach((task) => {
       if (task.isCompleted) return;
@@ -65,9 +87,10 @@ export class NotificationService {
       if (diffMinutes < 0 && diffMinutes > -1440) {
         // Less than 24h overdue
         const overdueId = `overdue-${task.id}-${todayStr}`;
+        const isDismissed = dismissedIds.includes(overdueId) || dismissedIds.includes(task.id);
         const alreadyNotified = existingNotifs.some((n) => n.id === overdueId);
 
-        if (!alreadyNotified) {
+        if (!alreadyNotified && !isDismissed) {
           const item: NotificationItem = {
             id: overdueId,
             taskId: task.id,
@@ -82,13 +105,14 @@ export class NotificationService {
         }
       }
 
-      // Imminent Reminder (e.g. customized reminderMinutesBefore or default 30 mins)
+      // Imminent Reminder
       const reminderThreshold = task.reminderMinutesBefore ?? 30;
       if (diffMinutes > 0 && diffMinutes <= reminderThreshold) {
         const reminderId = `reminder-${task.id}-${todayStr}-${reminderThreshold}`;
+        const isDismissed = dismissedIds.includes(reminderId) || dismissedIds.includes(task.id);
         const alreadyNotified = existingNotifs.some((n) => n.id === reminderId);
 
-        if (!alreadyNotified) {
+        if (!alreadyNotified && !isDismissed) {
           const item: NotificationItem = {
             id: reminderId,
             taskId: task.id,

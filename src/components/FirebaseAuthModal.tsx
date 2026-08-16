@@ -101,11 +101,7 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
       const res = await doSignInWithPopup();
       if (res && res.user) {
         setCurrentUser(res.user);
-        setSuccessMsg(`Selamat datang, ${res.user.displayName || 'Pengguna Google'}!`);
-        setTimeout(() => {
-          setSuccessMsg(null);
-          onClose();
-        }, 1500);
+        onClose();
       }
     } catch (err: any) {
       console.error('Google Auth Error:', err);
