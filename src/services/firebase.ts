@@ -2,12 +2,12 @@ import type { User } from 'firebase/auth';
 
 const env = (import.meta as any).env || {};
 const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyDemoTaskFlowApiKeyForLocalCloudTesting12345',
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || 'taskflow-app.firebaseapp.com',
-  projectId: env.VITE_FIREBASE_PROJECT_ID || 'taskflow-app',
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'taskflow-app.appspot.com',
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789012',
-  appId: env.VITE_FIREBASE_APP_ID || '1:123456789012:web:demo1234567890',
+  apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyBdY8KSDDR0auDWcgveExMV2E5Jbfk8ZWA',
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || 'taskflow-6abe3.firebaseapp.com',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || 'taskflow-6abe3',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'taskflow-6abe3.firebasestorage.app',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '198161797840',
+  appId: env.VITE_FIREBASE_APP_ID || '1:198161797840:web:a8085b960485ede57a04d5',
 };
 
 let firebaseServicesPromise: Promise<{
