@@ -49,6 +49,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [errors, setErrors] = useState<{ title?: string }>({});
 
   useEffect(() => {
+    if (!isOpen) return;
     if (taskToEdit) {
       setTitle(taskToEdit.title);
       setDescription(taskToEdit.description || '');
@@ -78,7 +79,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setTags([]);
     }
     setErrors({});
-  }, [taskToEdit, isOpen, categories]);
+  }, [isOpen, taskToEdit]);
 
   if (!isOpen) return null;
 

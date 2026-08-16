@@ -179,41 +179,32 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
-  // Real-time Cloud Sync for logged in Google Account (Sync tasks across Laptop & HP Mobile)
+  // Fetch & Sync Cloud Data for logged in Google Account (Laptop ↔ HP Mobile)
   useEffect(() => {
     if (!firebaseUser?.uid) return;
-    let unsubscribe: any = null;
 
-    // Fetch initial data & subscribe to live changes
+    // Load initial data from cloud when logged in
     FirebaseSyncService.fetchUserDataFromCloud(firebaseUser.uid).then((cloudData) => {
       if (cloudData) {
-        if (cloudData.tasks && cloudData.tasks.length > 0) setTasks(cloudData.tasks);
-        if (cloudData.categories && cloudData.categories.length > 0) setCategories(cloudData.categories);
-        if (cloudData.habits && cloudData.habits.length > 0) setHabits(cloudData.habits);
+        if (cloudData.tasks && Array.isArray(cloudData.tasks) && cloudData.tasks.length > 0) {
+          setTasks(cloudData.tasks);
+        }
+        if (cloudData.categories && Array.isArray(cloudData.categories) && cloudData.categories.length > 0) {
+          setCategories(cloudData.categories);
+        }
+        if (cloudData.habits && Array.isArray(cloudData.habits) && cloudData.habits.length > 0) {
+          setHabits(cloudData.habits);
+        }
       }
     });
-
-    FirebaseSyncService.subscribeUserData(firebaseUser.uid, (cloudData) => {
-      if (cloudData) {
-        if (cloudData.tasks) setTasks(cloudData.tasks);
-        if (cloudData.categories) setCategories(cloudData.categories);
-        if (cloudData.habits) setHabits(cloudData.habits);
-      }
-    }).then((unsubFn) => {
-      unsubscribe = unsubFn;
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
   }, [firebaseUser?.uid]);
 
-  // Auto-push local changes to Cloud Firestore when logged in
+  // Debounced auto-save to Cloud Firestore when tasks, categories, or habits change
   useEffect(() => {
     if (!firebaseUser?.uid) return;
     const timer = setTimeout(() => {
       FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, { tasks, categories, habits });
-    }, 1200);
+    }, 2000);
     return () => clearTimeout(timer);
   }, [tasks, categories, habits, firebaseUser?.uid]);
 
