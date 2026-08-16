@@ -237,26 +237,3 @@ export const TeamCollaborationModal: React.FC<TeamCollaborationModalProps> = ({
     </div>
   );
 };
-value = { role }
-onChange = {(e) => setRole(e.target.value as 'admin' | 'editor' | 'viewer')}
-className = "px-2 py-1 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-  >
-                <option value="editor">Editor (Bisa edit tugas)</option>
-                <option value="admin">Admin (Akses penuh)</option>
-                <option value="viewer">Viewer (Hanya lihat)</option>
-              </select >
-
-  <button
-    type="submit"
-    disabled={!name.trim() || !email.trim()}
-    className="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
-  >
-    + Tambahkan Anggota
-  </button>
-            </div >
-          </form >
-        </div >
-      </div >
-    </div >
-  );
-};

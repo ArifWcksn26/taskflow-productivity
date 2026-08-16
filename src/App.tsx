@@ -852,16 +852,6 @@ export default function App() {
       />
 
       <Suspense fallback={null}>
-        {/* Team Collaboration Modal */}
-        <TeamCollaborationModal
-          isOpen={isTeamModalOpen}
-          onClose={() => setIsTeamModalOpen(false)}
-          members={members}
-          tasks={tasks}
-          onAddMember={handleAddMember}
-          onRemoveMember={handleRemoveMember}
-        />
-
         {/* Cloud Sync Modal */}
         <CloudSyncModal
           isOpen={isCloudSyncModalOpen}
