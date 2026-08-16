@@ -33,14 +33,21 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
 }) => {
   if (!isOpen) return null;
 
-  const permission = NotificationService.getPermission();
+  const [permState, setPermState] = React.useState<NotificationPermission>(
+    NotificationService.getPermission()
+  );
 
   const handleRequestPush = async () => {
-    await NotificationService.requestPermission();
-    // Re-check
-    NotificationService.showBrowserNotification('TaskFlow Notifikasi Aktif', {
-      body: 'Anda akan menerima pemberitahuan otomatis saat tenggat tugas mendekat!',
-    });
+    const res = await NotificationService.requestPermission();
+    const current = res || NotificationService.getPermission();
+    setPermState(current);
+    if (current === 'granted') {
+      NotificationService.showBrowserNotification('TaskFlow Notifikasi Aktif', {
+        body: 'Anda akan menerima pemberitahuan otomatis saat tenggat tugas mendekat!',
+      });
+    } else {
+      alert('Izin Notifikasi diblokir oleh HP/Browser. Buka Setelan Situs di Chrome/Safari -> Izinkan Notifikasi untuk TaskFlow.');
+    }
   };
 
   const handleTestSound = () => {
@@ -79,12 +86,12 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
               <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
-                Izin Push Web: {permission === 'granted' ? 'Aktif' : 'Belum Diizinkan'}
+                Izin Push Web: {permState === 'granted' ? 'Aktif' : 'Belum Diizinkan'}
               </span>
             </div>
 
             <div className="flex items-center gap-1.5">
-              {permission !== 'granted' && (
+              {permState !== 'granted' && (
                 <button
                   onClick={handleRequestPush}
                   className="px-2 py-0.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"

@@ -16,10 +16,15 @@ export class NotificationService {
   public static async requestPermission(): Promise<NotificationPermission> {
     if (!this.isNotificationSupported()) return 'denied';
     try {
-      const permission = await Notification.requestPermission();
-      return permission;
+      if (typeof Notification.requestPermission === 'function') {
+        const req = Notification.requestPermission((res) => res);
+        if (req && typeof req.then === 'function') {
+          return await req;
+        }
+      }
+      return Notification.permission;
     } catch {
-      return 'denied';
+      return Notification.permission;
     }
   }
 
@@ -40,7 +45,7 @@ export class NotificationService {
         notification.close();
       };
     } catch {
-      // Fallback if browser blocks standard constructor in certain iframes
+      // Fallback if browser blocks standard constructor in certain mobile viewports
     }
   }
 
@@ -64,7 +69,7 @@ export class NotificationService {
   }
 
   /**
-   * Scan tasks and identify any upcoming or overdue deadlines
+   * Scan tasks and identify any upcoming, urgent, or overdue deadlines
    */
   public static checkDeadlines(
     tasks: Task[],
@@ -73,7 +78,7 @@ export class NotificationService {
   ): NotificationItem[] {
     const newNotifications: NotificationItem[] = [];
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const dismissedIds = this.getDismissedNotificationIds();
 
     tasks.forEach((task) => {
@@ -85,7 +90,6 @@ export class NotificationService {
 
       // Overdue Check
       if (diffMinutes < 0 && diffMinutes > -1440) {
-        // Less than 24h overdue
         const overdueId = `overdue-${task.id}-${todayStr}`;
         const isDismissed = dismissedIds.includes(overdueId) || dismissedIds.includes(task.id);
         const alreadyNotified = existingNotifs.some((n) => n.id === overdueId);
@@ -105,7 +109,7 @@ export class NotificationService {
         }
       }
 
-      // Imminent Reminder
+      // Imminent Reminder Check (preserves exact user setting e.g. 10 minutes before due time)
       const reminderThreshold = task.reminderMinutesBefore ?? 30;
       if (diffMinutes > 0 && diffMinutes <= reminderThreshold) {
         const reminderId = `reminder-${task.id}-${todayStr}-${reminderThreshold}`;

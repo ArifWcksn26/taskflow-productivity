@@ -281,16 +281,22 @@ export default function App() {
     }
   }, [firebaseUser]);
 
-  // Periodic Reminder & Deadline Checker (every 30 seconds)
+  // Periodic Reminder & Deadline Checker (runs 1s after load and every 15 seconds)
   useEffect(() => {
-    const checkTimer = setInterval(() => {
+    const runCheck = () => {
       setNotifications((prevNotifs) => {
         const newItems = NotificationService.checkDeadlines(tasks, prevNotifs, soundEnabled);
         return newItems.length > 0 ? [...newItems, ...prevNotifs] : prevNotifs;
       });
-    }, 30000);
+    };
 
-    return () => clearInterval(checkTimer);
+    const initialTimeout = setTimeout(runCheck, 1000);
+    const checkTimer = setInterval(runCheck, 15000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(checkTimer);
+    };
   }, [tasks, soundEnabled]);
 
   // Auto Cloud Sync Trigger
