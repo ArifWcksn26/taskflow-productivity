@@ -150,3 +150,10 @@ export async function fetchCloudKeyDoc(cloudKey: string) {
 }
 
 export type { User };
+
+// Pre-warm Firebase Services in background so sync operations are instantaneous
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    getFirebaseServices().catch(() => {});
+  }, 100);
+}
