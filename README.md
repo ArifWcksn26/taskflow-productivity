@@ -39,12 +39,6 @@ Aplikasi manajemen tugas dan produktivitas modern berbasis web. Dibangun dengan 
 - **JSON** — Backup dan restore penuh (tugas, kategori, anggota)
 - **Tautan Google Calendar** — Generate URL langsung untuk menambahkan tugas ke Google Calendar
 
-### Kolaborasi Tim
-- Tambah dan kelola anggota tim dengan role (admin, editor, viewer)
-- Assign beberapa anggota per tugas
-- Dashboard beban tugas per anggota di tab Tim
-- Foto dan nama akun Google otomatis sinkron ke daftar anggota saat login Firebase
-
 ### Analitik Produktivitas
 Skor produktivitas dihitung dengan formula berbobot:
 `(completion rate × 0.4) + (on-time rate × 0.3) + (subtask rate × 0.2) + (streak bonus max 10)`
@@ -137,8 +131,7 @@ taskflow-pro/
 │   │   ├── CloudSyncModal.tsx          # Cloud sync simulasi
 │   │   ├── ExportModal.tsx             # Ekspor CSV, PDF, ICS, JSON
 │   │   ├── FirebaseAuthModal.tsx       # Login Firebase dan sinkronisasi cloud
-│   │   ├── NotificationCenterModal.tsx # Pusat notifikasi
-│   │   └── TeamCollaborationModal.tsx  # Manajemen anggota tim
+│   │   └── NotificationCenterModal.tsx # Pusat notifikasi
 │   ├── services/
 │   │   ├── storage.ts                  # Persistence localStorage dan cloud sync simulasi
 │   │   ├── firebase.ts                 # Inisialisasi Firebase, wrappers auth dan Firestore
