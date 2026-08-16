@@ -179,6 +179,44 @@ export default function App() {
     StorageService.saveCloudSyncState(cloudSyncState);
   }, [cloudSyncState]);
 
+  // Real-time Cloud Sync for logged in Google Account (Sync tasks across Laptop & HP Mobile)
+  useEffect(() => {
+    if (!firebaseUser?.uid) return;
+    let unsubscribe: any = null;
+
+    // Fetch initial data & subscribe to live changes
+    FirebaseSyncService.fetchUserDataFromCloud(firebaseUser.uid).then((cloudData) => {
+      if (cloudData) {
+        if (cloudData.tasks && cloudData.tasks.length > 0) setTasks(cloudData.tasks);
+        if (cloudData.categories && cloudData.categories.length > 0) setCategories(cloudData.categories);
+        if (cloudData.habits && cloudData.habits.length > 0) setHabits(cloudData.habits);
+      }
+    });
+
+    FirebaseSyncService.subscribeUserData(firebaseUser.uid, (cloudData) => {
+      if (cloudData) {
+        if (cloudData.tasks) setTasks(cloudData.tasks);
+        if (cloudData.categories) setCategories(cloudData.categories);
+        if (cloudData.habits) setHabits(cloudData.habits);
+      }
+    }).then((unsubFn) => {
+      unsubscribe = unsubFn;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [firebaseUser?.uid]);
+
+  // Auto-push local changes to Cloud Firestore when logged in
+  useEffect(() => {
+    if (!firebaseUser?.uid) return;
+    const timer = setTimeout(() => {
+      FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, { tasks, categories, habits });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [tasks, categories, habits, firebaseUser?.uid]);
+
   // Automatically sync logged-in Google / Firebase Account to Team Members List (Penanggung Jawab Utama)
   useEffect(() => {
     if (firebaseUser) {
