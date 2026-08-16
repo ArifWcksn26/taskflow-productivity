@@ -358,7 +358,7 @@ export default function App() {
         priority: taskData.priority || 'medium',
         dueDate: taskData.dueDate || new Date().toISOString().split('T')[0],
         dueTime: taskData.dueTime || '18:00',
-        reminderMinutesBefore: taskData.reminderMinutesBefore ?? 30,
+        reminderMinutesBefore: taskData.reminderMinutesBefore ?? 10,
         isCompleted: false,
         subtasks: taskData.subtasks || [],
         assignedMemberIds: taskData.assignedMemberIds || ['user-1'],

@@ -38,7 +38,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState(getDateOffset(0));
   const [dueTime, setDueTime] = useState('18:00');
-  const [reminderMinutesBefore, setReminderMinutesBefore] = useState<number>(30);
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState<number>(10);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [assignedMemberIds, setAssignedMemberIds] = useState<string[]>(['user-1']);
@@ -57,7 +57,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setPriority(taskToEdit.priority);
       setDueDate(taskToEdit.dueDate || getDateOffset(0));
       setDueTime(taskToEdit.dueTime || '18:00');
-      setReminderMinutesBefore(taskToEdit.reminderMinutesBefore ?? 30);
+      setReminderMinutesBefore(taskToEdit.reminderMinutesBefore ?? 10);
       setSubtasks(taskToEdit.subtasks || []);
       setAssignedMemberIds(taskToEdit.assignedMemberIds || ['user-1']);
       setRecurrence(taskToEdit.recurrence || 'none');
@@ -71,7 +71,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setPriority('medium');
       setDueDate(getDateOffset(0));
       setDueTime('18:00');
-      setReminderMinutesBefore(30);
+      setReminderMinutesBefore(10);
       setSubtasks([]);
       setAssignedMemberIds(['user-1']);
       setRecurrence('none');
