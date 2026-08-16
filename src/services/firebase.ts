@@ -117,4 +117,36 @@ export async function fetchCloudUserDoc(uid: string) {
   return null;
 }
 
+export async function saveCloudKeyDoc(cloudKey: string, data: any) {
+  const s = await getFirebaseServices();
+  if (s && s.db) {
+    try {
+      const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+      await s.dbMod.setDoc(keyRef, { ...data, lastSyncedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Firestore saveCloudKeyDoc Error:', err);
+      return false;
+    }
+  }
+  return false;
+}
+
+export async function fetchCloudKeyDoc(cloudKey: string) {
+  const s = await getFirebaseServices();
+  if (s && s.db) {
+    try {
+      const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+      const snap = await s.dbMod.getDoc(keyRef);
+      if (snap.exists()) {
+        return snap.data();
+      }
+    } catch (err) {
+      console.error('Firestore fetchCloudKeyDoc Error:', err);
+      return null;
+    }
+  }
+  return null;
+}
+
 export type { User };

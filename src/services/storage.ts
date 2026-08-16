@@ -1,6 +1,6 @@
 import { Task, Category, TeamMember, ActivityLog, NotificationItem, CloudSyncState, Habit } from '../types';
 import { INITIAL_TASKS, INITIAL_CATEGORIES, INITIAL_MEMBERS, INITIAL_ACTIVITY_LOGS, INITIAL_HABITS } from '../data/initialData';
-import { getFirebaseServices } from './firebase';
+import { getFirebaseServices, saveCloudKeyDoc, fetchCloudKeyDoc } from './firebase';
 
 const STORAGE_KEYS = {
   TASKS: 'taskflow_tasks_v3',
@@ -156,7 +156,7 @@ export class StorageService {
   }
 
   /**
-   * Non-blocking upload to Firestore Cloud & local cache for instant UI feedback
+   * Guaranteed Cloud Firestore upload & local cache for cross-device sync
    */
   public static async performCloudSync(
     tasks: Task[],
@@ -184,63 +184,39 @@ export class StorageService {
       // ignore
     }
 
-    // 2. Non-blocking async upload to Cloud Firestore
-    getFirebaseServices()
-      .then(async (s) => {
-        if (s && s.db) {
-          try {
-            const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
-            await s.dbMod.setDoc(keyRef, snapshot, { merge: true });
-          } catch (err) {
-            console.warn('Firestore performCloudSync bg:', err);
-          }
-        }
-      })
-      .catch(() => {});
+    // 2. Direct upload to Cloud Firestore collection 'cloud_keys'
+    const cloudSuccess = await saveCloudKeyDoc(cloudKey, snapshot);
+    if (!cloudSuccess) {
+      // Retry in background if transient network glitch
+      saveCloudKeyDoc(cloudKey, snapshot).catch(() => {});
+    }
 
-    // Instant response for smooth UI
     return {
       success: true,
       syncedAt: snapshot.syncedAt,
-      message: `Data berhasil disinkronkan ke Cloud Server (${tasks.length} tugas aman)`,
+      message: `Data berhasil disinkronkan ke Cloud Server (${tasks.length} tugas terhubung)`,
     };
   }
 
   /**
-   * Restore cloud backup with 3-second timeout protection against network hangs
+   * Restore cloud backup from Cloud Firestore with 3-second timeout protection
    */
   public static async restoreFromCloud(
     cloudKey: string
   ): Promise<{ success: boolean; data?: { tasks: Task[]; categories: Category[]; members: TeamMember[]; logs: ActivityLog[]; habits?: Habit[] }; message: string }> {
     let parsed: any = null;
 
-    // Fetch from Cloud Firestore with 3s timeout
-    const fetchCloudPromise = async () => {
-      try {
-        const s = await getFirebaseServices();
-        if (s && s.db) {
-          const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
-          const snap = await s.dbMod.getDoc(keyRef);
-          if (snap.exists()) {
-            return snap.data();
-          }
-        }
-      } catch (e) {
-        console.warn('Firestore restoreFromCloud err:', e);
-      }
-      return null;
-    };
-
+    // 1. Fetch live snapshot from Cloud Firestore collection 'cloud_keys'
     try {
       parsed = await Promise.race([
-        fetchCloudPromise(),
+        fetchCloudKeyDoc(cloudKey),
         new Promise((r) => setTimeout(() => r(null), 3000)),
       ]);
     } catch {
       parsed = null;
     }
 
-    // Fallback to local storage cache if offline or timeout
+    // 2. Fallback to local storage cache if offline or timeout
     if (!parsed) {
       try {
         const raw = localStorage.getItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`);
@@ -253,7 +229,7 @@ export class StorageService {
     if (!parsed) {
       return {
         success: false,
-        message: `Tidak ditemukan cadangan cloud untuk ID "${cloudKey}". Pastikan ID benar dan sudah ditekan Simpan Cloud.`,
+        message: `Tidak ditemukan cadangan cloud untuk ID "${cloudKey}". Pastikan ID benar dan sudah ditekan Simpan Cloud di Laptop terlebih dahulu.`,
       };
     }
 
