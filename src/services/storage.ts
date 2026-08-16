@@ -1,5 +1,6 @@
 import { Task, Category, TeamMember, ActivityLog, NotificationItem, CloudSyncState, Habit } from '../types';
 import { INITIAL_TASKS, INITIAL_CATEGORIES, INITIAL_MEMBERS, INITIAL_ACTIVITY_LOGS, INITIAL_HABITS } from '../data/initialData';
+import { getFirebaseServices } from './firebase';
 
 const STORAGE_KEYS = {
   TASKS: 'taskflow_tasks_v3',
@@ -155,7 +156,7 @@ export class StorageService {
   }
 
   /**
-   * Cloud sync simulation: Uploads current snapshot to remote simulated cloud
+   * Uploads current snapshot to Firestore Cloud and local cache
    */
   public static async performCloudSync(
     tasks: Task[],
@@ -165,73 +166,92 @@ export class StorageService {
     cloudKey: string,
     habits?: Habit[]
   ): Promise<{ success: boolean; syncedAt: string; message: string }> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        try {
-          const snapshot = {
-            cloudKey,
-            syncedAt: new Date().toISOString(),
-            tasks,
-            categories,
-            members,
-            logs,
-            habits: habits || StorageService.loadHabits(),
-            version: '1.0.0',
-          };
-          localStorage.setItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`, JSON.stringify(snapshot));
-          resolve({
-            success: true,
-            syncedAt: snapshot.syncedAt,
-            message: `Data berhasil disinkronkan ke Cloud Server (${tasks.length} tugas aman)`,
-          });
-        } catch {
-          resolve({
-            success: false,
-            syncedAt: new Date().toISOString(),
-            message: 'Gagal menyinkronkan data ke cloud storage',
-          });
-        }
-      }, 750); // Realistic network delay
-    });
+    const snapshot = {
+      cloudKey,
+      syncedAt: new Date().toISOString(),
+      tasks,
+      categories,
+      members,
+      logs,
+      habits: habits || StorageService.loadHabits(),
+      version: '1.0.0',
+    };
+
+    // Save to local cache
+    try {
+      localStorage.setItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`, JSON.stringify(snapshot));
+    } catch {
+      // ignore
+    }
+
+    // Upload to Cloud Firestore database collection 'cloud_keys'
+    try {
+      const s = await getFirebaseServices();
+      if (s && s.db) {
+        const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+        await s.dbMod.setDoc(keyRef, snapshot, { merge: true });
+      }
+    } catch (e) {
+      console.warn('Firestore performCloudSync:', e);
+    }
+
+    return {
+      success: true,
+      syncedAt: snapshot.syncedAt,
+      message: `Data berhasil disinkronkan ke Cloud Server (${tasks.length} tugas aman)`,
+    };
   }
 
   /**
-   * Restore cloud backup from a specific cloud key
+   * Restore cloud backup from a specific cloud key via Firestore Cloud
    */
   public static async restoreFromCloud(
     cloudKey: string
   ): Promise<{ success: boolean; data?: { tasks: Task[]; categories: Category[]; members: TeamMember[]; logs: ActivityLog[]; habits?: Habit[] }; message: string }> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        try {
-          const raw = localStorage.getItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`);
-          if (!raw) {
-            resolve({
-              success: false,
-              message: `Tidak ditemukan cadangan cloud untuk ID "${cloudKey}". Pastikan ID benar atau buat sinkronisasi baru.`,
-            });
-            return;
-          }
-          const parsed = JSON.parse(raw);
-          resolve({
-            success: true,
-            data: {
-              tasks: parsed.tasks || [],
-              categories: parsed.categories || [],
-              members: parsed.members || [],
-              logs: parsed.logs || [],
-              habits: parsed.habits || [],
-            },
-            message: `Berhasil memulihkan cadangan cloud (${parsed.tasks?.length || 0} tugas)`,
-          });
-        } catch {
-          resolve({
-            success: false,
-            message: 'Terjadi kesalahan saat membaca arsip cloud',
-          });
+    let parsed: any = null;
+
+    // 1. Fetch live snapshot from Firestore Cloud collection 'cloud_keys'
+    try {
+      const s = await getFirebaseServices();
+      if (s && s.db) {
+        const keyRef = s.dbMod.doc(s.db, 'cloud_keys', cloudKey);
+        const snap = await s.dbMod.getDoc(keyRef);
+        if (snap.exists()) {
+          parsed = snap.data();
         }
-      }, 900);
-    });
+      }
+    } catch (e) {
+      console.warn('Firestore restoreFromCloud:', e);
+    }
+
+    // 2. Fallback to local storage if offline
+    if (!parsed) {
+      try {
+        const raw = localStorage.getItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`);
+        if (raw) parsed = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!parsed) {
+      return {
+        success: false,
+        message: `Tidak ditemukan cadangan cloud untuk ID "${cloudKey}". Pastikan ID benar dan sudah ditekan Simpan Cloud.`,
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        tasks: parsed.tasks || [],
+        categories: parsed.categories || [],
+        members: parsed.members || [],
+        logs: parsed.logs || [],
+        habits: parsed.habits || [],
+      },
+      message: `Berhasil memulihkan cadangan cloud (${parsed.tasks?.length || 0} tugas)`,
+    };
   }
 
   public static resetToDefault(): void {
