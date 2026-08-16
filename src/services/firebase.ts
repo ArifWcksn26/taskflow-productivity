@@ -90,9 +90,14 @@ export async function listenAuthState(callback: (user: any) => void) {
 export async function saveCloudUserDoc(uid: string, data: any) {
   const s = await getFirebaseServices();
   if (s && s.db) {
-    const userRef = s.dbMod.doc(s.db, 'users', uid);
-    await s.dbMod.setDoc(userRef, { ...data, lastSyncedAt: new Date().toISOString() }, { merge: true });
-    return true;
+    try {
+      const userRef = s.dbMod.doc(s.db, 'users', uid);
+      await s.dbMod.setDoc(userRef, { ...data, lastSyncedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.warn('Firestore saveCloudUserDoc Error:', err);
+      return false;
+    }
   }
   return false;
 }
@@ -100,9 +105,14 @@ export async function saveCloudUserDoc(uid: string, data: any) {
 export async function fetchCloudUserDoc(uid: string) {
   const s = await getFirebaseServices();
   if (s && s.db) {
-    const userRef = s.dbMod.doc(s.db, 'users', uid);
-    const snap = await s.dbMod.getDoc(userRef);
-    return snap.exists() ? snap.data() : null;
+    try {
+      const userRef = s.dbMod.doc(s.db, 'users', uid);
+      const snap = await s.dbMod.getDoc(userRef);
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.warn('Firestore fetchCloudUserDoc Error:', err);
+      return null;
+    }
   }
   return null;
 }

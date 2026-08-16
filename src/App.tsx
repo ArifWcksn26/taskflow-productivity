@@ -27,7 +27,7 @@ import { KanbanView } from './components/KanbanView';
 
 // Services
 import { FirebaseSyncService } from './services/firebaseSyncService';
-import type { User } from './services/firebase';
+import { listenAuthState, type User } from './services/firebase';
 
 // Lazy Loaded Secondary Components for Speed Optimization
 const CalendarView = lazy(() => import('./components/CalendarView').then((m) => ({ default: m.CalendarView })));
@@ -153,6 +153,22 @@ export default function App() {
       localStorage.removeItem('taskflow_user_profile');
     }
   }, [firebaseUser]);
+
+  // Listen for Firebase Auth state in background (restores live tokens for Firestore permissions)
+  useEffect(() => {
+    let unsub: any = null;
+    listenAuthState((user) => {
+      if (user) {
+        setFirebaseUser(user);
+      }
+    }).then((unsubFn) => {
+      unsub = unsubFn;
+    });
+
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
 
   // Auto save to storage on change
   useEffect(() => {
