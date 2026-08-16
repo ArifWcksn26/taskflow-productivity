@@ -111,6 +111,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           <div className="flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200/80 dark:border-slate-700/60">
             <button
               id="btn-view-list"
+              aria-label="Tampilan Daftar Grid"
               onClick={() => onViewModeChange('list')}
               title="Tampilan Daftar Grid"
               className={`p-1 rounded-md text-xs font-medium transition-all ${
@@ -123,6 +124,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             </button>
             <button
               id="btn-view-board"
+              aria-label="Tampilan Papan Kanban"
               onClick={() => onViewModeChange('board')}
               title="Tampilan Papan Kanban"
               className={`p-1 rounded-md text-xs font-medium transition-all ${
@@ -147,6 +149,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             <Plus className="w-4 h-4 text-indigo-600 dark:text-indigo-400 ml-0.5 flex-shrink-0" />
             <input
               id="input-quick-task-title"
+              aria-label="Judul tugas baru"
               type="text"
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
@@ -159,6 +162,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             {/* Category Selection */}
             <select
               id="select-quick-category"
+              aria-label="Pilih Kategori Tugas"
               value={quickCategory}
               onChange={(e) => setQuickCategory(e.target.value)}
               className="px-2 py-1 text-xs rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
@@ -173,6 +177,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             {/* Priority Selection */}
             <select
               id="select-quick-priority"
+              aria-label="Pilih Prioritas Tugas"
               value={quickPriority}
               onChange={(e) => setQuickPriority(e.target.value as Priority)}
               className="px-2 py-1 text-xs rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
@@ -185,6 +190,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             <button
               type="submit"
+              aria-label="Tambah tugas cepat"
               disabled={!quickTitle.trim()}
               className="px-2.5 py-1 text-xs font-semibold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
@@ -223,10 +229,12 @@ export const TaskList: React.FC<TaskListProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {/* Filter Status */}
             <div>
-              <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-filter-status" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
                 Status Tugas
               </label>
               <select
+                id="select-filter-status"
+                aria-label="Filter Status Tugas"
                 value={filters.status}
                 onChange={(e) =>
                   onFiltersChange({
@@ -246,10 +254,12 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             {/* Filter Prioritas */}
             <div>
-              <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-filter-priority" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
                 Tingkat Prioritas
               </label>
               <select
+                id="select-filter-priority"
+                aria-label="Filter Tingkat Prioritas"
                 value={filters.priority}
                 onChange={(e) =>
                   onFiltersChange({
@@ -271,10 +281,12 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             {/* Urutan Sort */}
             <div>
-              <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
+              <label htmlFor="select-sort-by" className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-0.5">
                 Urutkan Berdasarkan
               </label>
               <select
+                id="select-sort-by"
+                aria-label="Urutkan Berdasarkan"
                 value={filters.sortBy}
                 onChange={(e) =>
                   onFiltersChange({

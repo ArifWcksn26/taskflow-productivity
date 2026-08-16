@@ -137,6 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
               <input
                 id="input-header-search"
                 type="text"
+                aria-label="Cari tugas, tag, atau deskripsi"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Cari tugas, tag, atau deskripsi..."
@@ -144,6 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
               {searchQuery && (
                 <button
+                  aria-label="Hapus pencarian"
                   onClick={() => onSearchChange('')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
@@ -158,6 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Quick Add Button */}
             <button
               id="btn-header-add-task"
+              aria-label="Tambah Tugas Baru"
               onClick={onOpenNewTaskModal}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold shadow-xs transition-all"
             >
@@ -168,6 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Firebase User Auth Button */}
             <button
               id="btn-firebase-user-auth"
+              aria-label={firebaseUser ? `Tersambung: ${firebaseUser.displayName || firebaseUser.email}` : 'Masuk Akun Firebase atau Google'}
               onClick={onOpenFirebaseAuth}
               title={firebaseUser ? `Tersambung: ${firebaseUser.displayName || firebaseUser.email}` : 'Masuk Akun Firebase / Google'}
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all text-xs font-medium"
@@ -196,6 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Cloud Sync Status Button */}
             <button
               id="btn-cloud-sync-status"
+              aria-label="Status Sinkronisasi Cloud Storage"
               onClick={onOpenCloudSync}
               title={`Status Cloud Sync: ${cloudSyncState.status === 'synced' ? 'Tersinkronisasi' : 'Menyinkronkan'}`}
               className="relative p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all"
@@ -217,6 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Notification Bell */}
             <button
               id="btn-header-notifications"
+              aria-label="Pusat Notifikasi dan Pengingat"
               onClick={onOpenNotifications}
               title="Notifikasi & Pengingat"
               className="relative p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all"
@@ -232,6 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Export Modal Button */}
             <button
               id="btn-header-export"
+              aria-label="Ekspor Laporan PDF atau CSV"
               onClick={onOpenExport}
               title="Ekspor CSV / PDF"
               className="hidden md:flex p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all"
@@ -242,6 +249,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Sound Mute/Unmute */}
             <button
               id="btn-toggle-sound"
+              aria-label={soundEnabled ? 'Matikan Suara Notifikasi' : 'Aktifkan Suara Notifikasi'}
               onClick={onToggleSound}
               title={soundEnabled ? 'Suara Notifikasi: Aktif' : 'Suara Notifikasi: Hening'}
               className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all"
@@ -252,6 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Dark Mode Toggle */}
             <button
               id="btn-toggle-darkmode"
+              aria-label={isDarkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
               onClick={onToggleDarkMode}
               title={isDarkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
               className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 transition-all"
