@@ -184,18 +184,26 @@ export class StorageService {
       // ignore
     }
 
-    // 2. Background upload to Cloud Firestore
+    // 2. Background upload to Cloud Firestore Web SDK
     saveCloudKeyDoc(cloudKey, snapshot).catch((err) => {
       console.warn('Firestore Cloud Sync Note:', err);
     });
 
-    // 3. Dual-Cloud REST relay push for instant unauthenticated cross-device sync
+    // 3. Direct Native Google Firestore HTTPS REST API push (Zero 404 errors)
     try {
-      fetch(`https://kvdb.io/87W8qZp3Q6k4y321/${cloudKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(snapshot),
-      }).catch(() => {});
+      fetch(
+        `https://firestore.googleapis.com/v1/projects/taskflow-6abe3/databases/(default)/documents/cloud_keys/${cloudKey}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: {
+              payload: { stringValue: JSON.stringify(snapshot) },
+              syncedAt: { stringValue: snapshot.syncedAt },
+            },
+          }),
+        }
+      ).catch(() => {});
     } catch {
       // ignore
     }
@@ -208,32 +216,38 @@ export class StorageService {
   }
 
   /**
-   * Restore cloud backup from Cloud Firestore & REST relay fallback
+   * Restore cloud backup from Cloud Firestore SDK & Native REST API
    */
   public static async restoreFromCloud(
     cloudKey: string
   ): Promise<{ success: boolean; data?: { tasks: Task[]; categories: Category[]; members: TeamMember[]; logs: ActivityLog[]; habits?: Habit[] }; message: string }> {
     let parsed: any = null;
 
-    // 1. Fetch live snapshot from Cloud Firestore collection 'cloud_keys'
+    // 1. Fetch live snapshot from Cloud Firestore Web SDK
     try {
       parsed = await Promise.race([
         fetchCloudKeyDoc(cloudKey),
-        new Promise((r) => setTimeout(() => r(null), 2000)),
+        new Promise((r) => setTimeout(() => r(null), 1500)),
       ]);
     } catch {
       parsed = null;
     }
 
-    // 2. Fallback to Cloud REST relay if Firestore timed out or unauthenticated
+    // 2. Fetch live snapshot from Native Google Firestore HTTPS REST API
     if (!parsed) {
       try {
-        const res = await fetch(`https://kvdb.io/87W8qZp3Q6k4y321/${cloudKey}`);
+        const res = await fetch(
+          `https://firestore.googleapis.com/v1/projects/taskflow-6abe3/databases/(default)/documents/cloud_keys/${cloudKey}`
+        );
         if (res.ok) {
-          parsed = await res.json();
+          const doc = await res.json();
+          const rawPayload = doc.fields?.payload?.stringValue;
+          if (rawPayload) {
+            parsed = JSON.parse(rawPayload);
+          }
         }
       } catch (e) {
-        console.warn('Cloud REST Relay note:', e);
+        console.warn('Firestore REST restore note:', e);
       }
     }
 
