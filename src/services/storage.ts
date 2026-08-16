@@ -184,10 +184,21 @@ export class StorageService {
       // ignore
     }
 
-    // 2. Async background upload to Cloud Firestore (Instant UI response)
+    // 2. Background upload to Cloud Firestore
     saveCloudKeyDoc(cloudKey, snapshot).catch((err) => {
-      console.warn('Background Cloud Sync Note:', err);
+      console.warn('Firestore Cloud Sync Note:', err);
     });
+
+    // 3. Dual-Cloud REST relay push for instant unauthenticated cross-device sync
+    try {
+      fetch(`https://kvdb.io/87W8qZp3Q6k4y321/${cloudKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
 
     return {
       success: true,
@@ -197,7 +208,7 @@ export class StorageService {
   }
 
   /**
-   * Restore cloud backup from Cloud Firestore with 3-second timeout protection
+   * Restore cloud backup from Cloud Firestore & REST relay fallback
    */
   public static async restoreFromCloud(
     cloudKey: string
@@ -208,13 +219,25 @@ export class StorageService {
     try {
       parsed = await Promise.race([
         fetchCloudKeyDoc(cloudKey),
-        new Promise((r) => setTimeout(() => r(null), 3000)),
+        new Promise((r) => setTimeout(() => r(null), 2000)),
       ]);
     } catch {
       parsed = null;
     }
 
-    // 2. Fallback to local storage cache if offline or timeout
+    // 2. Fallback to Cloud REST relay if Firestore timed out or unauthenticated
+    if (!parsed) {
+      try {
+        const res = await fetch(`https://kvdb.io/87W8qZp3Q6k4y321/${cloudKey}`);
+        if (res.ok) {
+          parsed = await res.json();
+        }
+      } catch (e) {
+        console.warn('Cloud REST Relay note:', e);
+      }
+    }
+
+    // 3. Fallback to local storage cache if offline
     if (!parsed) {
       try {
         const raw = localStorage.getItem(`${STORAGE_KEYS.CLOUD_REMOTE_BACKUP}_${cloudKey}`);
