@@ -15,7 +15,6 @@ import {
   Bell,
   Repeat,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { Task, Category, TeamMember } from '../types';
 import { ExportService } from '../services/exportService';
 
@@ -99,17 +98,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!task.isCompleted) {
-      // Trigger rewarding confetti
-      try {
-        confetti({
-          particleCount: 40,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ['#6366f1', '#10b981', '#f59e0b', '#3b82f6'],
-        });
-      } catch {
-        // Safe fallback
-      }
+      // Trigger rewarding confetti dynamically
+      import('canvas-confetti')
+        .then((m) => {
+          m.default({
+            particleCount: 40,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#6366f1', '#10b981', '#f59e0b', '#3b82f6'],
+          });
+        })
+        .catch(() => {});
     }
     onToggleComplete(task.id);
   };

@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Task, Category, TeamMember } from '../types';
 
 export class ExportService {
@@ -48,13 +46,13 @@ export class ExportService {
         completedSubtasks.toString(),
         totalSubtasks.toString(),
         `"${assignedNames}"`,
-        task.recurrence,
-        task.estimatedMinutes?.toString() || '0',
-        task.createdAt.split('T')[0],
-      ];
+        task.recurrence || 'none',
+        task.estimatedMinutes ? `${task.estimatedMinutes} mnt` : '-',
+        task.createdAt || '-',
+      ].join(',');
     });
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -67,14 +65,17 @@ export class ExportService {
   }
 
   /**
-   * Export comprehensive PDF report
+   * Export comprehensive PDF report (dynamically imports jsPDF)
    */
-  public static exportToPDF(
+  public static async exportToPDF(
     tasks: Task[],
     categories: Category[],
     members: TeamMember[],
     reportTitle: string = 'Laporan Aktivitas & Produktivitas Tugas'
-  ): void {
+  ): Promise<void> {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',

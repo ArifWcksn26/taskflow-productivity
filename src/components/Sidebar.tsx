@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-full md:w-56 lg:w-60 flex-shrink-0 flex flex-col gap-4 py-3.5 px-2.5 sm:px-3 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 transition-colors duration-200">
       {/* Main Views */}
       <div className="space-y-0.5">
-        <div className="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-400">
+        <div className="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
           Tampilan Utama
         </div>
         <div className="flex overflow-x-auto gap-1.5 md:flex-col md:space-y-0.5 md:gap-0 pb-1 md:pb-0 scrollbar-none">
@@ -142,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <Icon
-                    className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-400'
+                    className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'
                       }`}
                   />
                   <span>{item.label}</span>
@@ -168,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Categories Section */}
       <div className="space-y-0.5">
         <div className="flex items-center justify-between px-2.5 py-1">
-          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-400">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
             Kategori & Proyek
           </span>
           <button
@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             aria-label="Tambah Kategori Baru"
             onClick={onOpenNewCategoryModal}
             title="Tambah Kategori Baru"
-            className="p-0.5 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-0.5 rounded text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <FolderPlus className="w-3.5 h-3.5" />
           </button>
