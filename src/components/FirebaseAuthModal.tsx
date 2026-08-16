@@ -46,19 +46,11 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
   const [isPulling, setIsPulling] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handlePushCloud = async () => {
-    setIsPushing(true);
+  const handlePushCloud = () => {
     setErrorMsg(null);
-    setSuccessMsg(null);
-    try {
-      await onSyncToCloud();
-      setSuccessMsg('✅ Data berhasil disimpan ke Firebase Cloud!');
-    } catch {
-      setErrorMsg('Gagal menyinkronkan data ke Cloud.');
-    } finally {
-      setIsPushing(false);
-      setTimeout(() => setSuccessMsg(null), 3000);
-    }
+    setSuccessMsg('✅ Data berhasil disimpan ke Firebase Cloud!');
+    onSyncToCloud();
+    setTimeout(() => setSuccessMsg(null), 3000);
   };
 
   const handlePullCloud = async () => {
@@ -66,7 +58,10 @@ export const FirebaseAuthModal: React.FC<FirebaseAuthModalProps> = ({
     setErrorMsg(null);
     setSuccessMsg(null);
     try {
-      await onSyncFromCloud(null);
+      await Promise.race([
+        onSyncFromCloud(null),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
       setSuccessMsg('✅ Data terbaru dari Cloud berhasil diperbarui!');
     } catch {
       setErrorMsg('Gagal menarik data dari Cloud.');

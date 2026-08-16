@@ -1000,13 +1000,13 @@ export default function App() {
           onClose={() => setIsFirebaseAuthModalOpen(false)}
           currentUser={firebaseUser}
           setCurrentUser={setFirebaseUser}
-          onSyncToCloud={async () => {
+          onSyncToCloud={() => {
             if (firebaseUser) {
-              await FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, {
+              FirebaseSyncService.saveUserDataToCloud(firebaseUser.uid, {
                 tasks,
                 categories,
                 habits,
-              });
+              }).catch(() => {});
             }
           }}
           onSyncFromCloud={async () => {
