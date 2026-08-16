@@ -284,17 +284,11 @@ export default function App() {
   // Periodic Reminder & Deadline Checker (every 30 seconds)
   useEffect(() => {
     const checkTimer = setInterval(() => {
-      const newItems = NotificationService.checkDeadlines(tasks, notifications, soundEnabled);
-      if (newItems.length > 0) {
-        setNotifications((prev) => [...newItems, ...prev]);
-      }
+      setNotifications((prevNotifs) => {
+        const newItems = NotificationService.checkDeadlines(tasks, prevNotifs, soundEnabled);
+        return newItems.length > 0 ? [...newItems, ...prevNotifs] : prevNotifs;
+      });
     }, 30000);
-
-    // Initial check on mount
-    const initialItems = NotificationService.checkDeadlines(tasks, notifications, soundEnabled);
-    if (initialItems.length > 0) {
-      setNotifications((prev) => [...initialItems, ...prev]);
-    }
 
     return () => clearInterval(checkTimer);
   }, [tasks, soundEnabled]);
